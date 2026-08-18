@@ -121,6 +121,36 @@ The dataset in Phase 2 should focus on the failure modes observed here: question
 
 ---
 
+## Phase 2 — First Dataset
+
+Every case in `data/routing_cases.json` traces back to something observed in Phase 1. No speculation.
+
+**Why not just write 40 cases covering everything equally?**
+
+Because Phase 1 showed the real problem is concentrated in 3 of 4 labels. Distributing cases evenly would have hidden that — summarization successes would have offset the failures and made the overall accuracy look better than it is.
+
+**15 cases, organized by what Phase 1 revealed:**
+
+```
+Cases       What they cover
+──────────  ───────────────────────────────────────────────────────
+r_001–003   QA mislabeled as summarization → wrong model (silent)
+r_004–005   General chat never predicted → wrong model
+r_006–007   Code gen mislabeled as summarization
+r_008–009   Summarization baseline — classifier works here
+r_010–011   Rule 1 and Rule 2 baselines (deterministic)
+r_012       Rule 1 vs Rule 2 conflict — priority=high wins
+r_013       Technical QA drifts toward code gen label
+r_014       Ambiguous case — flagged for review
+r_015       General chat routed correctly by accident (wrong label)
+```
+
+`r_012` is the most interesting case — `priority=high` and `max_cost=0.005` both apply. Rule 1 wins. This is undefined behavior in the codebase (no explicit conflict resolution), but the code happens to check `priority` first. Worth testing explicitly.
+
+`r_015` is a reminder that correct routing and correct label are not the same thing. "What do you think about AI taking over jobs?" routed to gpt-4 — right destination, but because the classifier called it "question answering", not "general chat". The routing was correct for the wrong reason.
+
+---
+
 ## Project Plan
 
 Each phase builds on what was learned in the previous one. README updates at the end of each phase.
@@ -132,13 +162,13 @@ Phase 1 — Explore                         ✓ done
   No code, just notes
         │
         ▼
-Phase 2 — First Dataset                   ← you are here
+Phase 2 — First Dataset                   ✓ done
   Write 10-15 routing test cases
   Based on real failures from Phase 1
   Hand-written, not generated
         │
         ▼
-Phase 3 — First Evaluator
+Phase 3 — First Evaluator                 ← you are here
   Build routing_eval.py
   Deterministic, no LLM dependency
   Get it green
