@@ -149,6 +149,47 @@ r_015       General chat routed correctly by accident (wrong label)
 
 `r_015` is a reminder that correct routing and correct label are not the same thing. "What do you think about AI taking over jobs?" routed to gpt-4 — right destination, but because the classifier called it "question answering", not "general chat". The routing was correct for the wrong reason.
 
+```
+r_015 — "What do you think about AI taking over jobs?"
+
+What actually happened:
+  prompt
+    │
+    ▼
+  classifier
+    │
+    └── predicted: question answering (0.66)   ← WRONG label
+                        │
+                        ▼
+                      gpt-4                    ← correct destination (by accident)
+
+
+What should have happened:
+  prompt
+    │
+    ▼
+  classifier
+    │
+    └── predicted: general chat               ← correct label
+                        │
+                        ▼
+                      gpt-4                   ← correct destination
+
+
+Why this is dangerous — if routing logic ever changes:
+  question answering  ──►  gpt-4        (today)
+  general chat        ──►  gpt-4        (today)
+       │
+       │  routing rule changes
+       ▼
+  question answering  ──►  Mistral-7B   (future)
+  general chat        ──►  gpt-4        (future)
+       │
+       └──  r_015 silently breaks — no error raised, wrong model used
+```
+
+A destination-only check would mark this as a pass today and miss the regression tomorrow.
+
 ---
 
 ## Project Plan
