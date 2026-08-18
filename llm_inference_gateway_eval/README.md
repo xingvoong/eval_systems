@@ -147,6 +147,42 @@ r_015       General chat routed correctly by accident (wrong label)
 
 `r_012` is the most interesting case — `priority=high` and `max_cost=0.005` both apply. Rule 1 wins. This is undefined behavior in the codebase (no explicit conflict resolution), but the code happens to check `priority` first. Worth testing explicitly.
 
+```
+r_012 — { prompt: "What is the capital of Japan?", priority: "high", max_cost: 0.005 }
+
+Both rules fire on this request:
+
+  Rule 1: priority == "high"   →  gpt-4       (use best model, ignore cost)
+  Rule 2: max_cost < 0.01      →  Mistral-7B  (stay cheap, skip classifier)
+       │
+       │  conflict — which rule wins?
+       ▼
+
+How router.py resolves it (implicitly):
+
+  def route_request(prompt, priority, max_cost):
+      if priority == "high":          ← checked first → Rule 1 wins
+          return gpt-4
+      if max_cost < 0.01:             ← never reached
+          return Mistral-7B
+
+  Result: gpt-4   ✓
+
+
+Why this is worth an explicit test case:
+
+  Today              priority=high → gpt-4    (Rule 1 wins by code order)
+       │
+       │  someone reorders the if-blocks
+       ▼
+  Tomorrow           max_cost<0.01 → Mistral-7B  (Rule 2 now wins)
+                          │
+                          └── caller said "high priority", gets cheap model
+                              no error raised, no log warning
+```
+
+The conflict resolution is not documented anywhere in the codebase. It works by accident of if-block order. The eval pins that behavior so any reordering gets caught.
+
 `r_015` is a reminder that correct routing and correct label are not the same thing. "What do you think about AI taking over jobs?" routed to gpt-4 — right destination, but because the classifier called it "question answering", not "general chat". The routing was correct for the wrong reason.
 
 ```
