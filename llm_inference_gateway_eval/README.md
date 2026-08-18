@@ -11,16 +11,35 @@ Before building any evaluator, run the system and observe what actually happens.
 **The system under test:**
 
 ```
-POST /chat  { prompt, priority, max_cost }
-       │
-       ▼
-  router.py
-       │
-       ├── Rule 1: priority == "high"   ──────────────► gpt-4
-       ├── Rule 2: max_cost < 0.01      ──────────────► Mistral-7B
-       └── Rule 3: classify prompt
-                   ├── code gen / summarization  ──► Mistral-7B
-                   └── general chat / QA         ──► gpt-4
+┌─────────────────────────────────────────────────────────┐
+│                  llm_inference_gateway                   │
+│                                                         │
+│   POST /chat                                            │
+│   { prompt, priority, max_cost }                        │
+│          │                                              │
+│          ▼                                              │
+│   ┌─────────────┐                                       │
+│   │   router.py │                                       │
+│   └──────┬──────┘                                       │
+│          │                                              │
+│   Rule 1: priority == "high"  ──────────────► gpt-4    │
+│          │                                              │
+│   Rule 2: max_cost < 0.01  ─────────────► Mistral-7B   │
+│          │                                              │
+│   Rule 3: learned model exists?                         │
+│          ├── yes ──► learned_router.py ──► model        │
+│          └── no  ──► classifier.py                      │
+│                          │                              │
+│                   ┌──────┴──────┐                       │
+│                   │             │                       │
+│              code gen      general chat                 │
+│            summarization   question answering           │
+│                   │             │                       │
+│              Mistral-7B       gpt-4                     │
+│                                                         │
+│   Every request: log(prompt, model, reason, latency)    │
+│   Cache: hit → skip LLM call, return cached response    │
+└─────────────────────────────────────────────────────────┘
 ```
 
 **What to do:**
