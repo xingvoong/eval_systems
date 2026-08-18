@@ -59,4 +59,57 @@ No framework yet. Just observations written down.
 
 ---
 
+## Project Plan
+
+Each phase builds on what was learned in the previous one. README updates at the end of each phase.
+
+```
+Phase 1 — Explore                         ← you are here
+  Run the system manually on 20 prompts
+  Observe what fails and why
+  No code, just notes
+        │
+        ▼
+Phase 2 — First Dataset
+  Write 10-15 routing test cases
+  Based on real failures from Phase 1
+  Hand-written, not generated
+        │
+        ▼
+Phase 3 — First Evaluator
+  Build routing_eval.py
+  Deterministic, no LLM dependency
+  Get it green
+        │
+        ▼
+Phase 4 — Classifier Eval
+  Build classifier_cases.json
+  Build classifier_eval.py
+  Track accuracy + confidence scores
+        │
+        ▼
+Phase 5 — Response Quality
+  Build quality_cases.json with reference responses
+  Build LLM-as-judge (quality_eval.py)
+        │
+        ▼
+Phase 6 — Validate the Judge
+  Consistency: same input → same score?
+  Calibration: does the judge agree with your labels?
+  Adversarial: can a bad response fool it?
+        │
+        ▼
+Phase 7 — Red Team
+  Adversarial routing inputs
+  Adversarial classifier inputs
+        │
+        ▼
+Phase 8 — CI
+  Wire everything into run_evals.sh
+  Set pass/fail thresholds
+  GitHub Actions
+```
+
+---
+
 *README updates after Phase 1 is done.*
