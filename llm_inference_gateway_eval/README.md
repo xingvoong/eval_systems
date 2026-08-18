@@ -23,8 +23,10 @@ Before building any evaluator, run the system and observe what actually happens.
 │   └──────┬──────┘                                       │
 │          │                                              │
 │   Rule 1: priority == "high"  ──────────────► gpt-4    │
+│          │  (caller says: use best model, ignore cost)  │
 │          │                                              │
 │   Rule 2: max_cost < 0.01  ─────────────► Mistral-7B   │
+│          │  (caller says: stay cheap, skip classifier)  │
 │          │                                              │
 │   Rule 3: learned model exists?                         │
 │          ├── yes ──► learned_router.py ──► model        │
