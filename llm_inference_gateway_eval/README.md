@@ -59,18 +59,78 @@ No framework yet. Just observations written down.
 
 ---
 
+## Phase 1 — Findings
+
+Ran `phase1_explore.py` on 20 prompts (5 per label + 2 ambiguous).
+
+**Overall classifier accuracy: 8/18 = 44%**
+
+The classifier is wrong more than half the time.
+
+```
+Label               Prompts   Correct   Accuracy
+──────────────────  ───────   ───────   ────────
+code generation        5         2        40%
+summarization          5         5       100%
+question answering     5         1        20%
+general chat           3         0         0%
+```
+
+**Finding 1: "summarization" is the default label**
+
+The classifier predicted summarization 11 out of 20 times. It latches onto the word "summarize" in training data and maps anything slightly abstract to that label. Works great when the word appears in the prompt. Fails everywhere else.
+
+**Finding 2: "general chat" is effectively broken**
+
+The classifier never once predicted "general chat" as the top label. Not for "Hey, how are you doing today?", not for "I'm feeling overwhelmed with work." The label exists but the model doesn't use it.
+
+**Finding 3: low confidence is the norm, not the exception**
+
+Most wrong predictions landed between 0.32–0.42 confidence. The model is guessing. A correct prediction at 0.32 (prompt #1 — "Write a Python function...") is not reliable. A different phrasing of the same prompt will flip the label.
+
+```
+Prompt                                    Predicted      Confidence
+────────────────────────────────────────  ─────────────  ──────────
+Write a Python function to reverse a...  summarization     0.32   ✗
+What is the capital of Japan?            summarization     0.71   ✗  ← confident and wrong
+What does HTTP stand for?                code generation   0.46   ✗
+When did World War II end?               summarization     0.42   ✗
+Hey, how are you doing today?            question ans.     0.42   ✗
+```
+
+**Finding 4: wrong labels cause silent routing failures**
+
+The routing consequence of a wrong label isn't visible in the logs — you just see the wrong model got picked. "What is the capital of Japan?" gets labeled summarization → routes to Mistral-7B instead of GPT-4. A factual question gets the weaker model. No error raised.
+
+```
+Prompt                              Expected Label      Routed To    Should Be
+──────────────────────────────────  ──────────────      ─────────    ─────────
+What is the capital of Japan?       question ans.       Mistral-7B   gpt-4   ✗
+When did World War II end?          question ans.       Mistral-7B   gpt-4   ✗
+What is the difference btwn TCP/UDP question ans.       Mistral-7B   gpt-4   ✗
+I'm feeling overwhelmed with work.  general chat        Mistral-7B   gpt-4   ✗
+```
+
+**What this means for Phase 2**
+
+The classifier is the weakest part of the system. The rule-based routing (Rule 1 and Rule 2) works fine — those are deterministic. The problem is Rule 3, which depends entirely on a classifier that is unreliable for 3 of 4 labels.
+
+The dataset in Phase 2 should focus on the failure modes observed here: question answering mislabeled as summarization, general chat never predicted, and low-confidence code generation.
+
+---
+
 ## Project Plan
 
 Each phase builds on what was learned in the previous one. README updates at the end of each phase.
 
 ```
-Phase 1 — Explore                         ← you are here
+Phase 1 — Explore                         ✓ done
   Run the system manually on 20 prompts
   Observe what fails and why
   No code, just notes
         │
         ▼
-Phase 2 — First Dataset
+Phase 2 — First Dataset                   ← you are here
   Write 10-15 routing test cases
   Based on real failures from Phase 1
   Hand-written, not generated
@@ -112,4 +172,4 @@ Phase 8 — CI
 
 ---
 
-*README updates after Phase 1 is done.*
+*README updates after each phase.*
