@@ -228,6 +228,51 @@ A destination-only check would mark this as a pass today and miss the regression
 
 ---
 
+## Phase 3 — First Evaluator
+
+Build a deterministic evaluator that runs each routing case through the actual gateway logic. No LLM calls, no network requests — just routing decisions.
+
+**Design decisions:**
+
+- Import `route_request()` directly from the gateway — test the real code, not a copy
+- Mock `OpenAIProvider` and `HuggingFaceProvider` — we're testing routing, not responses
+- Check both `model` and `routing_reason` — destination alone isn't enough (see r_015)
+- Report per-rule breakdown, not just overall accuracy
+
+```
+routing_cases.json
+      │
+      ▼
+routing_eval.py
+      │
+      ├── sys.path.insert → gateway repo
+      ├── mock OpenAIProvider, HuggingFaceProvider
+      │
+      ├── for each case:
+      │     route_request(prompt, priority, max_cost)
+      │           │
+      │     returns (provider, actual_model, actual_reason)
+      │           │
+      │     assert actual_model == expected_model        ← destination
+      │     assert actual_reason == expected_reason      ← which rule fired
+      │
+      ▼
+Output:
+  • Pass/fail per case
+  • Failure reason (model mismatch, reason mismatch, or both)
+  • Per-rule breakdown
+  • Exit code 1 if any case fails  ← CI-ready
+```
+
+**What to do:**
+
+1. Write `evaluators/routing_eval.py`
+2. Run it — expect failures on first pass
+3. Diagnose failures, fix the dataset or the script
+4. Get it green
+
+---
+
 ## Phase 3 — Findings
 
 Built `evaluators/routing_eval.py`. Imports `route_request()` directly from the gateway, mocks LLM provider calls, runs all 15 cases.
