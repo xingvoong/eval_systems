@@ -1,0 +1,142 @@
+[
+  {
+    "id": "c_001",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "expected_label": "summarization",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (1.00 confidence). Word 'summarize' present."
+  },
+  {
+    "id": "c_002",
+    "prompt": "TL;DR this paragraph for me.",
+    "expected_label": "summarization",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (0.98 confidence). Strong summarization signal."
+  },
+  {
+    "id": "c_003",
+    "prompt": "Give me a one-paragraph summary of the French Revolution.",
+    "expected_label": "summarization",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (1.00 confidence). Word 'summary' present."
+  },
+  {
+    "id": "c_004",
+    "prompt": "Condense this meeting transcript into action items.",
+    "expected_label": "summarization",
+    "difficulty": "medium",
+    "notes": "Phase 1: correct (0.68 confidence). No 'summarize' word — relies on 'condense'."
+  },
+  {
+    "id": "c_005",
+    "prompt": "What are the main takeaways from this earnings report?",
+    "expected_label": "summarization",
+    "difficulty": "medium",
+    "notes": "Phase 1: correct (0.85 confidence). 'Takeaways' maps to summarization."
+  },
+  {
+    "id": "c_006",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "expected_label": "code generation",
+    "difficulty": "easy",
+    "notes": "Phase 1: WRONG — labeled as summarization (0.32). Canonical code gen prompt."
+  },
+  {
+    "id": "c_007",
+    "prompt": "How do I sort a dictionary by value in Python?",
+    "expected_label": "code generation",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (0.51 confidence). Low confidence even on a win."
+  },
+  {
+    "id": "c_008",
+    "prompt": "Implement a binary search algorithm in JavaScript.",
+    "expected_label": "code generation",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (0.62 confidence). 'Implement' is a strong signal."
+  },
+  {
+    "id": "c_009",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "expected_label": "code generation",
+    "difficulty": "medium",
+    "notes": "Phase 1: WRONG — labeled as summarization (0.68). High confidence wrong answer."
+  },
+  {
+    "id": "c_010",
+    "prompt": "Write a SQL query to find the top 5 customers by revenue.",
+    "expected_label": "code generation",
+    "difficulty": "medium",
+    "notes": "Phase 1: WRONG — labeled as question answering (0.33). SQL looks like a question to the classifier."
+  },
+  {
+    "id": "c_011",
+    "prompt": "What is the capital of Japan?",
+    "expected_label": "question answering",
+    "difficulty": "easy",
+    "notes": "Phase 1: WRONG — labeled as summarization (0.71). Confident and wrong."
+  },
+  {
+    "id": "c_012",
+    "prompt": "Who invented the telephone?",
+    "expected_label": "question answering",
+    "difficulty": "easy",
+    "notes": "Phase 1: correct (0.70 confidence). Person + invention framing works."
+  },
+  {
+    "id": "c_013",
+    "prompt": "When did World War II end?",
+    "expected_label": "question answering",
+    "difficulty": "easy",
+    "notes": "Phase 1: WRONG — labeled as summarization (0.42). Historical facts drift to summarization."
+  },
+  {
+    "id": "c_014",
+    "prompt": "What does HTTP stand for?",
+    "expected_label": "question answering",
+    "difficulty": "medium",
+    "notes": "Phase 1: WRONG — labeled as code generation (0.46). Acronym looks technical."
+  },
+  {
+    "id": "c_015",
+    "prompt": "What is the difference between TCP and UDP?",
+    "expected_label": "question answering",
+    "difficulty": "medium",
+    "notes": "Phase 1: WRONG — labeled as code generation (0.36). Technical comparison drifts toward code gen."
+  },
+  {
+    "id": "c_016",
+    "prompt": "Hey, how are you doing today?",
+    "expected_label": "general chat",
+    "difficulty": "easy",
+    "notes": "Phase 1: WRONG — labeled as question answering (0.42). Greeting misclassified."
+  },
+  {
+    "id": "c_017",
+    "prompt": "I'm feeling a bit overwhelmed with work lately.",
+    "expected_label": "general chat",
+    "difficulty": "easy",
+    "notes": "Phase 1: WRONG — labeled as summarization (0.35). Personal statement has no clear signal."
+  },
+  {
+    "id": "c_018",
+    "prompt": "What do you think about AI taking over jobs?",
+    "expected_label": "general chat",
+    "difficulty": "medium",
+    "notes": "Phase 1: WRONG — labeled as question answering (0.66). Opinion question looks like QA."
+  },
+  {
+    "id": "c_019",
+    "prompt": "Summarize this code and tell me if it has bugs.",
+    "expected_label": "code generation",
+    "difficulty": "hard",
+    "notes": "Ambiguous. Phase 1: labeled as summarization (0.99). 'Summarize' dominates even though task is code review. Routing consequence: goes to Mistral-7B instead of gpt-4."
+  },
+  {
+    "id": "c_020",
+    "prompt": "What's this do?",
+    "expected_label": "question answering",
+    "difficulty": "hard",
+    "notes": "Ambiguous short prompt. Phase 1: labeled as summarization (0.37). No context, classifier guesses."
+  }
+]
