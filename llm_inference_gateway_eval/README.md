@@ -228,6 +228,44 @@ A destination-only check would mark this as a pass today and miss the regression
 
 ---
 
+## Phase 3 — Findings
+
+Built `evaluators/routing_eval.py`. Imports `route_request()` directly from the gateway, mocks LLM provider calls, runs all 15 cases.
+
+**First run: 3/15 passed (20%)**
+
+All failures had the same reason: `expected 'zero_shot:*' got 'learned_router'`. The gateway has a trained `router_model.pkl`, so `is_trained_model_available()` returns True and Rule 3 always uses the learned router — not the zero-shot classifier.
+
+Phase 1 tested the classifier in isolation by calling `classify_prompt()` directly. The actual system was never using it. The dataset was written against the wrong path.
+
+**Discovery: the learned router is better than the zero-shot classifier**
+
+```
+Prompt                                  Zero-shot result     Learned router result
+──────────────────────────────────────  ───────────────────  ─────────────────────
+What is the capital of Japan?           Mistral-7B  ✗        gpt-4  ✓
+I'm feeling overwhelmed with work.      Mistral-7B  ✗        gpt-4  ✓
+Give me a bash script to backup files   Mistral-7B  ✓        Mistral-7B  ✓
+Hey, how are you doing today?           gpt-4  ✓ (accident)  gpt-4  ✓ (correct)
+```
+
+Updated `routing_cases.json` to reflect reality — all Rule 3 cases now expect `learned_router`.
+
+**Second run: 15/15 passed (100%)**
+
+```
+Rule                 Pass   Fail
+──────────────────   ────   ────
+priority==high          1      0
+max_cost<0.01           1      0
+learned_router         12      0
+conflict (r_012)        1      0
+```
+
+The evaluator is green. Rule-based routing works. The learned router routes all test cases correctly.
+
+---
+
 ## Project Plan
 
 Each phase builds on what was learned in the previous one. README updates at the end of each phase.
@@ -245,13 +283,13 @@ Phase 2 — First Dataset                   ✓ done
   Hand-written, not generated
         │
         ▼
-Phase 3 — First Evaluator                 ← you are here
+Phase 3 — First Evaluator                 ✓ done
   Build routing_eval.py
   Deterministic, no LLM dependency
   Get it green
         │
         ▼
-Phase 4 — Classifier Eval
+Phase 4 — Classifier Eval                 ← you are here
   Build classifier_cases.json
   Build classifier_eval.py
   Track accuracy + confidence scores
