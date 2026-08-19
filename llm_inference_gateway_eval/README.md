@@ -334,13 +334,13 @@ Phase 3 — First Evaluator                 ✓ done
   Get it green
         │
         ▼
-Phase 4 — Classifier Eval                 ← you are here
+Phase 4 — Classifier Eval                 ✓ done
   Build classifier_cases.json
   Build classifier_eval.py
   Track accuracy + confidence scores
         │
         ▼
-Phase 5 — Response Quality
+Phase 5 — Response Quality                ← you are here
   Build quality_cases.json with reference responses
   Build LLM-as-judge (quality_eval.py)
         │
@@ -360,6 +360,78 @@ Phase 8 — CI
   Wire everything into run_evals.sh
   Set pass/fail thresholds
   GitHub Actions
+```
+
+---
+
+## Phase 4 — Classifier Eval
+
+Built `data/classifier_cases.json` (20 cases) and `evaluators/classifier_eval.py`. Cases grounded in Phase 1 failures — all 10 known mislabelings included with expected labels and notes.
+
+**Overall accuracy: 8/20 = 40%**
+
+```
+Label                  Pass   Fail   Accuracy
+─────────────────────  ────   ────   ────────
+summarization             5      0    100%
+code generation           2      4     33%
+question answering        1      5     17%
+general chat              0      3      0%
+
+Difficulty   Pass   Fail   Accuracy
+──────────   ────   ────   ────────
+easy            6      5     55%
+medium          2      5     29%
+hard            0      2      0%
+```
+
+**Finding 1: confidence below 0.50 always means failure**
+
+All 8 low-confidence predictions were wrong. The classifier is not just unreliable — it's perfectly miscalibrated at low confidence. A confidence threshold would catch every failure in this category.
+
+```
+Low confidence failures (conf < 0.50):
+  c_006  conf=0.32  'Write a Python function to reverse a linked list.'   → summarization ✗
+  c_010  conf=0.33  'Write a SQL query to find top 5 customers...'        → question answering ✗
+  c_013  conf=0.42  'When did World War II end?'                          → summarization ✗
+  c_014  conf=0.46  'What does HTTP stand for?'                           → code generation ✗
+  c_015  conf=0.36  'What is the difference between TCP and UDP?'         → code generation ✗
+  c_016  conf=0.42  'Hey, how are you doing today?'                       → question answering ✗
+  c_017  conf=0.35  'I'm feeling overwhelmed with work lately.'           → summarization ✗
+  c_020  conf=0.37  'What's this do?'                                     → summarization ✗
+```
+
+**Finding 2: c_019 is the most dangerous failure**
+
+"Summarize this code and tell me if it has bugs" → summarization at **0.99 confidence**. The word "summarize" in the prompt completely dominates the prediction. The task is actually code review, which needs gpt-4. It gets routed to Mistral-7B with near-certainty.
+
+```
+  prompt: "Summarize this code and tell me if it has bugs."
+      │
+      ▼
+  classifier
+      │
+      └── summarization  0.99  ← word "summarize" hijacks everything
+          question ans.  0.01
+          general chat   0.00
+          code gen       0.00  ← correct label, lowest score
+      │
+      ▼
+  Mistral-7B  ✗  (needed gpt-4 for code review)
+```
+
+High confidence + wrong label + wrong model. No error raised.
+
+**Finding 3: the fallback path is dangerous**
+
+If `router_model.pkl` is deleted, the system silently falls back to this classifier. The routing accuracy would drop from 100% (learned router) to roughly 40%. Four out of every ten requests would go to the wrong model — silently.
+
+```
+  router_model.pkl exists     →  learned_router  →  15/15 correct  ✓
+  router_model.pkl missing    →  classifier      →  ~8/20 correct  ✗
+        │
+        └── no warning, no log entry, no error
+            just wrong routing at 40% accuracy
 ```
 
 ---
