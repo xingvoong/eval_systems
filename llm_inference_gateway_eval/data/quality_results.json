@@ -1,0 +1,215 @@
+[
+  {
+    "id": "q_001",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "reference_response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "correctness": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response is identical to the reference response, implementing an iterative linked list reversal algorithm correctly with optimal time complexity O(n) and space complexity O(1)."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_002",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "To reverse a linked list, you need to go through each node and change where it points. You start from the beginning and work your way to the end, making each node point backwards instead of forwards. This is a common interview question and involves pointer manipulation. The time complexity is O(n) and space complexity is O(1).",
+    "reference_response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "notes": "Explains the concept but provides no code. Fails the task.",
+    "scores": {
+      "correctness": 3,
+      "completeness": 2,
+      "conciseness": 5,
+      "reasoning": "The candidate provides correct conceptual explanation of the algorithm and accurate complexity analysis, but fails to deliver the actual Python function code that was explicitly requested in the prompt."
+    },
+    "avg": 3.3333333333333335
+  },
+  {
+    "id": "q_003",
+    "prompt": "What is the capital of Japan?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "Tokyo.",
+    "reference_response": "Tokyo.",
+    "quality_dimensions": [
+      "correctness",
+      "conciseness"
+    ],
+    "scores": {
+      "correctness": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response is identical to the reference response, providing the correct capital of Japan in a direct and complete manner."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_004",
+    "prompt": "What is the capital of Japan?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "Japan is a fascinating island nation located in East Asia. It has a rich cultural history spanning thousands of years, with influences from China and Korea. The country is known for its technology, cuisine, and traditional arts. Japan consists of four main islands and thousands of smaller ones. The country has a constitutional monarchy with an emperor. Its major cities include Osaka, Kyoto, and of course its capital, which is a major global financial center.",
+    "reference_response": "Tokyo.",
+    "quality_dimensions": [
+      "correctness",
+      "conciseness"
+    ],
+    "notes": "Correct answer buried at the end after massive padding. Fluent but wasteful.",
+    "scores": {
+      "correctness": 5,
+      "completeness": 3,
+      "conciseness": 1,
+      "reasoning": "The candidate correctly identifies Tokyo as Japan's capital (buried in the text), but provides excessive irrelevant background information when a simple direct answer was requested, making it verbose and poorly focused."
+    },
+    "avg": 3.0
+  },
+  {
+    "id": "q_005",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "\u2022 The article discusses three main themes: economic impact, social change, and policy response.\n\u2022 Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n\u2022 Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "reference_response": "\u2022 The article discusses three main themes: economic impact, social change, and policy response.\n\u2022 Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n\u2022 Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "correctness": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response is identical to the reference response, providing three well-structured bullets that accurately summarize key points while maintaining appropriate brevity."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_006",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "mediocre",
+    "response": "Here are the key points:\n\u2022 The article talks about some important topics that are relevant to current events and society.\n\u2022 There are several findings mentioned that could have implications for various stakeholders.\n\u2022 The author concludes with some recommendations that readers might find useful.",
+    "reference_response": "\u2022 The article discusses three main themes: economic impact, social change, and policy response.\n\u2022 Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n\u2022 Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "notes": "Follows the format but contains zero information. Confident-sounding but completely hollow.",
+    "scores": {
+      "correctness": 2,
+      "completeness": 1,
+      "conciseness": 5,
+      "reasoning": "The candidate provides three bullets as requested and is concise, but fails to deliver specific, substantive content\u2014using only vague generalizations instead of actual key points from the article, making it factually incomplete compared to the reference's concrete details."
+    },
+    "avg": 2.6666666666666665
+  },
+  {
+    "id": "q_007",
+    "prompt": "What is the difference between TCP and UDP?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "TCP (Transmission Control Protocol) is connection-oriented \u2014 it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless \u2014 it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "reference_response": "TCP (Transmission Control Protocol) is connection-oriented \u2014 it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless \u2014 it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "correctness": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response is identical to the reference response, accurately covering key differences (connection-oriented vs connectionless, delivery guarantees, ordering, speed tradeoffs) with appropriate examples for each protocol."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_008",
+    "prompt": "What is the difference between TCP and UDP?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "TCP and UDP are both network protocols. TCP is more reliable while UDP is faster. They are used in different situations depending on what you need. TCP makes sure all the data gets there and UDP doesn't check. Both are important in networking.",
+    "reference_response": "TCP (Transmission Control Protocol) is connection-oriented \u2014 it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless \u2014 it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "notes": "Vague and adds no concrete information. Sounds correct but explains nothing.",
+    "scores": {
+      "correctness": 4,
+      "completeness": 2,
+      "conciseness": 4,
+      "reasoning": "The candidate response is factually correct but significantly lacks the specific technical details and practical examples that make the reference response more useful and complete."
+    },
+    "avg": 3.3333333333333335
+  },
+  {
+    "id": "q_009",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "reference_response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "correctness": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response is identical to the reference response, providing a functional bash backup script with proper variable setup, rsync command with appropriate flags, date formatting, and crontab instructions for nightly scheduling."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_010",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "mediocre",
+    "response": "You can use cron to schedule a backup script. Here is an example:\n\n```\ncp -r /source /backup\n```\n\nYou would need to add this to your crontab file. Crontab allows you to schedule commands to run automatically. The backup will copy your files to another location.",
+    "reference_response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "quality_dimensions": [
+      "correctness",
+      "completeness",
+      "conciseness"
+    ],
+    "notes": "Has a script but it's incomplete \u2014 no date stamping, no crontab syntax, uses cp instead of rsync.",
+    "scores": {
+      "correctness": 2,
+      "completeness": 2,
+      "conciseness": 4,
+      "reasoning": "The candidate provides a basic approach using cp instead of rsync, lacks a proper script structure, omits critical details like date stamping and crontab syntax, and provides insufficient implementation guidance compared to the reference."
+    },
+    "avg": 2.6666666666666665
+  }
+]

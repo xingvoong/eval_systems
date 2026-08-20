@@ -1,15 +1,13 @@
 """
 Phase 5 — Response Quality Evaluator (LLM-as-Judge)
 
-Scores each response in data/quality_cases.json using Claude as judge.
+Scores each response in data/quality_cases.json using Claude via OpenRouter.
 Judge receives: prompt + reference response + candidate response.
 Returns structured JSON scores on three dimensions.
 
 Setup:
-  pip install anthropic
-  export ANTHROPIC_API_KEY=your_key
-  # or load from gateway .env:
-  # source /path/to/llm_inference_gateway/.env
+  pip install requests
+  OPENROUTER_API_KEY is loaded from llm_inference_gateway/.env automatically
 
 Run from llm_inference_gateway_eval/:
   python evaluators/quality_eval.py
@@ -18,17 +16,13 @@ Run from llm_inference_gateway_eval/:
 import json
 import os
 import sys
+import requests
 from pathlib import Path
-
-try:
-    import anthropic
-except ImportError:
-    print("anthropic not installed. Run: pip install anthropic")
-    sys.exit(1)
 
 GATEWAY_ENV = Path(__file__).parents[3] / "llm_inference_gateway" / ".env"
 
-JUDGE_MODEL = "claude-haiku-4-5-20251001"  # fast and cheap for judging
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+JUDGE_MODEL = "anthropic/claude-haiku-4-5"
 
 JUDGE_SYSTEM = """You are an expert evaluator of LLM responses.
 You will be given a user prompt, a reference response (considered correct and complete),
@@ -55,7 +49,6 @@ Score the candidate response."""
 
 
 def load_env(path):
-    """Load key=value pairs from a .env file into os.environ."""
     if not path.exists():
         return
     with open(path) as f:
@@ -72,46 +65,60 @@ def load_cases():
         return json.load(f)
 
 
-def judge_response(client, case):
+def judge_response(api_key, case):
     user_msg = JUDGE_USER_TEMPLATE.format(
         prompt=case["prompt"],
         reference=case["reference_response"],
         candidate=case["response"],
     )
-    message = client.messages.create(
-        model=JUDGE_MODEL,
-        max_tokens=256,
-        system=JUDGE_SYSTEM,
-        messages=[{"role": "user", "content": user_msg}],
+    response = requests.post(
+        OPENROUTER_URL,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": JUDGE_MODEL,
+            "messages": [
+                {"role": "system", "content": JUDGE_SYSTEM},
+                {"role": "user", "content": user_msg},
+            ],
+            "max_tokens": 256,
+        },
     )
-    raw = message.content[0].text.strip()
+    response.raise_for_status()
+    raw = response.json()["choices"][0]["message"]["content"].strip()
+    # strip markdown code fences if present
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
     try:
-        scores = json.loads(raw)
+        return json.loads(raw)
     except json.JSONDecodeError:
         print(f"  [WARN] judge returned malformed JSON for {case['id']}: {raw}")
         return None
-    return scores
 
 
 def main():
     load_env(GATEWAY_ENV)
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
-        print("ANTHROPIC_API_KEY not set.")
-        print(f"Either export it or ensure it's in {GATEWAY_ENV}")
+        print("OPENROUTER_API_KEY not set.")
+        print(f"Ensure it's in {GATEWAY_ENV}")
         sys.exit(1)
 
-    client = anthropic.Anthropic(api_key=api_key)
     cases = load_cases()
 
-    print(f"Judging {len(cases)} responses with {JUDGE_MODEL}...\n")
+    print(f"Judging {len(cases)} responses with {JUDGE_MODEL} via OpenRouter...\n")
     print(f"{'ID':<8} {'Level':<10} {'Correct':<9} {'Complete':<10} {'Concise':<9} {'Avg':<6} Reasoning")
     print("-" * 110)
 
     results = []
     for case in cases:
-        scores = judge_response(client, case)
+        scores = judge_response(api_key, case)
         if scores is None:
             continue
 
@@ -130,7 +137,6 @@ def main():
         overall_avg = sum(r["avg"] for r in results) / len(results)
         print(f"\nOverall average score: {overall_avg:.2f} / 5.00\n")
 
-        # Per quality level breakdown
         by_level = {}
         for r in results:
             level = r["quality_level"]
@@ -141,8 +147,8 @@ def main():
         print("Average score by quality level:")
         print(f"  {'Level':<12} {'Avg Score':<10} {'Cases'}")
         print(f"  {'─────':<12} {'─────────':<10} {'─────'}")
-        for level, scores in sorted(by_level.items()):
-            print(f"  {level:<12} {sum(scores)/len(scores):<10.2f} {len(scores)}")
+        for level, scores_list in sorted(by_level.items()):
+            print(f"  {level:<12} {sum(scores_list)/len(scores_list):<10.2f} {len(scores_list)}")
 
         print()
         print("Observations to record:")
@@ -150,7 +156,6 @@ def main():
         print("  - Any cases where the judge gave a bad response a high score?")
         print("  - Any cases where the judge gave a good response a low score?")
 
-    # Save results
     results_path = Path(__file__).parents[1] / "data" / "quality_results.json"
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
