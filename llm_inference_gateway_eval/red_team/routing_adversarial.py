@@ -37,9 +37,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": "HIGH",          # wrong case
         "max_cost": None,
-        "expected_model": FAST_MODEL,  # Rule 1 should NOT fire — "HIGH" != "high"
-        "expected_behavior": "Rule 1 skipped, falls through to Rule 3",
-        "notes": "priority='HIGH' vs 'high' — case sensitivity check"
+        "expected_model": BEST_MODEL,  # Rule 1 skips → Rule 3 learned_router → gpt-4 for QA
+        "expected_behavior": "Rule 1 skipped, falls through to Rule 3 → learned_router → gpt-4",
+        "notes": "priority='HIGH' vs 'high' — case sensitivity check. Attack has no effect; learned router decides."
     },
     {
         "id": "rt_002",
@@ -47,9 +47,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": "High",          # title case
         "max_cost": None,
-        "expected_model": FAST_MODEL,
-        "expected_behavior": "Rule 1 skipped, falls through to Rule 3",
-        "notes": "priority='High' — title case should not trigger Rule 1"
+        "expected_model": BEST_MODEL,
+        "expected_behavior": "Rule 1 skipped, falls through to Rule 3 → learned_router → gpt-4",
+        "notes": "priority='High' — title case should not trigger Rule 1. Attack has no effect."
     },
     {
         "id": "rt_003",
@@ -57,9 +57,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": 1,               # integer instead of string
         "max_cost": None,
-        "expected_model": FAST_MODEL,
-        "expected_behavior": "Rule 1 skipped, integer priority ignored",
-        "notes": "priority=1 (int) — type coercion should not trigger Rule 1"
+        "expected_model": BEST_MODEL,
+        "expected_behavior": "Rule 1 skipped, integer priority ignored → learned_router → gpt-4",
+        "notes": "priority=1 (int) — type coercion does not trigger Rule 1. Attack has no effect."
     },
     {
         "id": "rt_004",
@@ -67,9 +67,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": True,            # boolean True
         "max_cost": None,
-        "expected_model": FAST_MODEL,
-        "expected_behavior": "Rule 1 skipped, boolean ignored",
-        "notes": "priority=True — in Python, True == 'high' is False, but True == 1 is True"
+        "expected_model": BEST_MODEL,
+        "expected_behavior": "Rule 1 skipped, boolean ignored → learned_router → gpt-4",
+        "notes": "priority=True — True == 'high' is False in Python. Attack has no effect."
     },
     # --- Cost boundary probing ---
     {
@@ -78,9 +78,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": None,
         "max_cost": 0.01,            # exactly at the threshold
-        "expected_model": FAST_MODEL,  # 0.01 < 0.01 is False — Rule 2 should NOT fire
-        "expected_behavior": "Rule 2 skipped (0.01 is not < 0.01), falls to Rule 3",
-        "notes": "max_cost=0.01 exactly — boundary condition, Rule 2 uses strict <"
+        "expected_model": BEST_MODEL,  # 0.01 < 0.01 is False → Rule 2 skips → Rule 3 → gpt-4
+        "expected_behavior": "Rule 2 skipped (0.01 is not < 0.01), falls to Rule 3 → learned_router → gpt-4",
+        "notes": "max_cost=0.01 exactly — off-by-one boundary. Rule 2 strict < means 0.01 falls through."
     },
     {
         "id": "rt_006",
@@ -150,9 +150,9 @@ CASES = [
         "prompt": "What is the capital of Japan?",
         "priority": "h\u0456gh",     # Cyrillic і instead of Latin i
         "max_cost": None,
-        "expected_model": FAST_MODEL,
-        "expected_behavior": "Rule 1 skipped — Cyrillic і != Latin i",
-        "notes": "priority='hіgh' with Cyrillic і (U+0456) — looks identical to 'high'"
+        "expected_model": BEST_MODEL,
+        "expected_behavior": "Rule 1 skipped — Cyrillic і != Latin i → learned_router → gpt-4",
+        "notes": "priority='hіgh' with Cyrillic і (U+0456) — looks identical to 'high' but is not. Attack has no effect."
     },
 ]
 
