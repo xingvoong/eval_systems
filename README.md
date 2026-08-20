@@ -25,9 +25,22 @@ AIUC certifies AI agents against their AIUC-1 standard. Their product *is* an ev
 
 | Project | What It Is | Status |
 |---|---|---|
-| [llm_inference_gateway](./llm_inference_gateway_eval/) | FastAPI service that routes prompts to LLM providers | In progress |
+| [llm_inference_gateway](./llm_inference_gateway_eval/) | FastAPI service that routes prompts to LLM providers | Phase 7 of 8 complete |
 
 More systems to be added.
+
+### llm_inference_gateway — Phase Progress
+
+| Phase | What | Result |
+|---|---|---|
+| 1 — Explore | Run classifier on 20 prompts, observe failures | 44% accuracy, "general chat" never predicted |
+| 2 — Dataset | Hand-write routing + classifier test cases | 15 routing, 20 classifier, 10 quality cases |
+| 3 — Routing Eval | Deterministic routing correctness | 15/15 after fixing Rule 3 expectations |
+| 4 — Classifier Eval | Accuracy + confidence per label | 65% overall; "question answering" 40%, "general chat" 20% |
+| 5 — Response Quality | LLM-as-judge via OpenRouter | Good responses avg 4.6, bad responses avg 1.7 |
+| 6 — Judge Validation | Consistency, calibration, adversarial | 0 variance, 0.93 Spearman correlation, 0/5 fooled |
+| 7 — Red Team | Adversarial routing + classifier attacks | Routing 12/12 held; classifier 3/6 held (50%) |
+| 8 — CI | Thresholds + GitHub Actions | Planned |
 
 ---
 

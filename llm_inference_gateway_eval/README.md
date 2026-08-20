@@ -108,12 +108,12 @@ Phase 6 — Validate the Judge              ✓ done
   Adversarial: can a bad response fool it?
         │
         ▼
-Phase 7 — Red Team                        ← you are here
+Phase 7 — Red Team                        ✓ done
   Adversarial routing inputs
   Adversarial classifier inputs
         │
         ▼
-Phase 8 — CI
+Phase 8 — CI                              ← you are here
   Wire everything into run_evals.sh
   Set pass/fail thresholds
   GitHub Actions
