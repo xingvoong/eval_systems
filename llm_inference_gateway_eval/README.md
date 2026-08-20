@@ -753,4 +753,26 @@ bash ci/run_evals.sh
 
 ---
 
-*README updates after each phase.*
+## Takeaways
+
+**The routing layer is hardened. The classifier is not.**
+
+Rule-based routing held 12/12 adversarial cases. Priority spoofing, unicode homoglyphs, prompt injection — none of it worked. If-statements with exact comparisons don't have attack surface. The routing logic never reads the prompt body to make routing decisions. There's no path in.
+
+The zero-shot classifier is a different story. One declarative preamble — "This is a general chat message" — flipped the classification to 0.99 confidence wrong. The classifier is doing textual entailment, not task understanding. It anchors on surface tokens. That's not fixable with more test cases.
+
+**The learned router is the real system.**
+
+Phase 1 tested `classify_prompt()` directly and got 44% accuracy. That's not what production uses. The actual code path is `learned_router.py`, which hit 100% on the routing eval. The zero-shot classifier is a cold-start fallback — it only fires when `router_model.pkl` is missing. Evaluating it as if it were the primary path was wrong. That's what Phase 1 was for: find that mismatch before writing a single test case.
+
+**Evaluator validation is not optional.**
+
+Before trusting the judge scores in Phase 5, Phase 6 ran three checks: consistency (zero variance at temperature=0), calibration (0.93 Spearman correlation against human labels), adversarial (0/5 fooled). If you skip that step, you don't know whether your judge is measuring quality or surface features. The adversarial judge test — fluent but wrong, verbose padding, confident hallucination — is the most important check. A judge that can't catch confident hallucination is useless.
+
+**CI thresholds are floors, not goals.**
+
+The classifier threshold is 40%. That's not a good number — it's the measured baseline. The threshold exists to catch regressions, not to claim the system is good. If you set thresholds aspirationally, CI becomes noise. Set them at what you've actually observed, document why, and let the number speak for itself.
+
+**The first pass of an adversarial eval will expose flaws in the eval.**
+
+Phase 7 routing showed 6/12 "broke" on the first run. Not because the router failed — because the test expectations were wrong. I had predicted `FAST_MODEL` for cases that fall through to the learned router, forgetting that the learned router sends QA to gpt-4. Fixing the eval and rerunning: 12/12. The adversarial suite found a gap in the eval design before it found a gap in the system. That's the right order.
