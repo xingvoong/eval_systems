@@ -28,6 +28,13 @@ evaluator_validation/
 red_team/
   routing_adversarial.py       # 12 adversarial attacks against routing logic
   classifier_adversarial.py    # 13 adversarial attacks against zero-shot classifier
+
+ci/
+  run_evals.sh                 # Runs all evals, enforces thresholds, exits 0/1
+  requirements.txt             # Python dependencies for CI
+
+.github/workflows/
+  evals.yml                    # GitHub Actions: run eval suite on push + PR
 ```
 
 Start with the README to understand why decisions were made. Then walk through `routing_eval.py` and `quality_eval.py` as the two most interesting pieces of code.
@@ -113,7 +120,7 @@ Phase 7 — Red Team                        ✓ done
   Adversarial classifier inputs
         │
         ▼
-Phase 8 — CI                              ← you are here
+Phase 8 — CI                              ✓ done
   Wire everything into run_evals.sh
   Set pass/fail thresholds
   GitHub Actions
@@ -656,6 +663,93 @@ Classifier   6 injection/overlap     3/6 held — 50% failure rate under adversa
 **The classifier is the weak point.** Zero-shot MNLI classifiers anchor on surface tokens. One declarative preamble can override the entire task intent at 0.99 confidence. This is a known limitation of the model architecture — it's doing textual entailment, not task understanding.
 
 The practical implication: the routing system's security depends on the caller sending valid `priority` and `max_cost` values in the API request, not in the prompt body. As long as those fields are validated at the API layer, the routing logic is sound. The classifier weakness doesn't affect routing — it's upstream, and if classification is wrong, the fallback is the learned router which has been more reliable throughout.
+
+---
+
+## Phase 8 — CI
+
+Two files wire the eval suite into a CI gate:
+
+```
+ci/run_evals.sh       — runs all evals, enforces thresholds, exits 0 or 1
+.github/workflows/evals.yml — triggers on push + PR
+```
+
+---
+
+### Thresholds
+
+```
+Eval                      Threshold   Rationale
+────────────────────────  ─────────   ──────────────────────────────────────────
+routing_eval              15/15       Deterministic logic — any regression is a bug
+classifier_eval           40%         Observed baseline — don't regress below measured floor
+routing_adversarial       12/12       Security must hold — no acceptable failures
+classifier_adversarial    3/6         Documented weakness — threshold matches current behavior
+quality_eval              (observe)   Runs when OPENROUTER_API_KEY is set, no hard threshold yet
+```
+
+Thresholds are not aspirational. They're the floor: "if we drop below this, something regressed." The classifier at 40% is weak — that's documented — but the threshold exists to catch accidental regressions, not to claim the system is good.
+
+---
+
+### How it runs
+
+```
+push/PR to main
+      │
+      ▼
+GitHub Actions (ubuntu-latest, Python 3.11)
+      │
+      ├── checkout eval_systems
+      ├── checkout llm_inference_gateway (system under test)
+      ├── pip install ci/requirements.txt
+      │
+      └── bash ci/run_evals.sh
+              │
+              ├── routing_eval.py         → PASS/FAIL
+              ├── classifier_eval.py      → PASS/FAIL (threshold: 40%)
+              ├── routing_adversarial.py  → PASS/FAIL
+              ├── classifier_adversarial.py → PASS/FAIL
+              └── judge evals             → SKIP (no API key in CI)
+                                            (run locally with key set)
+              │
+              └── exit 0 (all pass) or exit 1 (any fail)
+```
+
+LLM-judge evals are skipped in CI unless `OPENROUTER_API_KEY` is set as a GitHub secret. They're expensive and non-deterministic. Run them locally before merging anything that touches `quality_eval.py` or `evaluator_validation/`.
+
+---
+
+### Local run
+
+```bash
+cd llm_inference_gateway_eval
+source venv/bin/activate
+source /path/to/llm_inference_gateway/.env   # sets OPENROUTER_API_KEY
+bash ci/run_evals.sh
+```
+
+---
+
+### Phase 8 — Result
+
+```
+============================================================
+  EVAL SUMMARY
+============================================================
+  PASS    routing_eval         15/15 passed (threshold: 15/15)
+  PASS    classifier_eval      40% accuracy (threshold: 40%)
+  PASS    routing_adversarial  12/12 held (threshold: 12/12)
+  PASS    classifier_adversarial  3/6 held (threshold: 3/6)
+  SKIP    quality_eval + judge_validation  (OPENROUTER_API_KEY not set)
+
+  Passed:  4
+  Failed:  0
+  Skipped: 1
+============================================================
+  CI PASSED
+```
 
 ---
 

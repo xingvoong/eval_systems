@@ -1,0 +1,49 @@
+name: Eval Suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  run-evals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout eval_systems
+        uses: actions/checkout@v4
+        with:
+          path: eval_systems
+
+      - name: Checkout llm_inference_gateway
+        uses: actions/checkout@v4
+        with:
+          repository: xingvoong/llm_inference_gateway
+          path: llm_inference_gateway
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('eval_systems/llm_inference_gateway_eval/ci/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r eval_systems/llm_inference_gateway_eval/ci/requirements.txt
+
+      - name: Run eval suite
+        working-directory: eval_systems/llm_inference_gateway_eval
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: bash ci/run_evals.sh
