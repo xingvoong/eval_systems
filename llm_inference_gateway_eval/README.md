@@ -93,13 +93,13 @@ Phase 5 — Response Quality                ✓ done
   Build LLM-as-judge (quality_eval.py)
         │
         ▼
-Phase 6 — Validate the Judge              ← you are here
+Phase 6 — Validate the Judge              ✓ done
   Consistency: same input → same score?
   Calibration: does the judge agree with your labels?
   Adversarial: can a bad response fool it?
         │
         ▼
-Phase 7 — Red Team
+Phase 7 — Red Team                        ← you are here
   Adversarial routing inputs
   Adversarial classifier inputs
         │
@@ -431,6 +431,82 @@ q_004 bad response:
 **Finding 2: judge output format is variable**
 
 First run: judge wrapped JSON in markdown code fences. Fixed by stripping fences before parsing. Signals that Phase 6 (judge validation) is necessary — the judge's own reliability needs to be tested.
+
+---
+
+## Phase 6 — Validate the Judge
+
+Three scripts in `evaluator_validation/`. All run at temperature=0 against the same OpenRouter judge used in Phase 5.
+
+---
+
+### Consistency — `judge_consistency.py`
+
+Same input through the judge 5x. Score variance should be zero.
+
+```
+ID       Level      Correct         Var    Complete        Var    Concise         Var    Stable?
+q_001    good       [5,5,5,5,5]     0.00   [5,5,5,5,5]     0.00   [5,5,5,5,5]     0.00   ✓
+q_002    bad        [3,3,3,3,3]     0.00   [2,2,2,2,2]     0.00   [5,5,5,5,5]     0.00   ✓
+q_004    bad        [5,5,5,5,5]     0.00   [3,3,3,3,3]     0.00   [1,1,1,1,1]     0.00   ✓
+q_006    mediocre   [1,1,1,1,1]     0.00   [1,1,1,1,1]     0.00   [3,3,3,3,3]     0.00   ✓
+q_010    mediocre   [2,2,2,2,2]     0.00   [2,2,2,2,2]     0.00   [4,4,4,4,4]     0.00   ✓
+
+Unstable cases: 0/5 — judge is fully consistent at temperature=0
+```
+
+---
+
+### Calibration — `judge_calibration.py`
+
+Human labels written before running the judge. Spearman rank correlation measures agreement.
+
+```
+Dimension      Human vs Judge   Interpretation
+─────────────  ──────────────   ──────────────
+correctness    0.98             strong ✓
+completeness   0.96             strong ✓
+conciseness    0.84             acceptable
+
+Average: 0.93 — strong ✓
+```
+
+Most disagreements were off by 1 point (`~`). No case where human and judge were more than 1 apart. The judge is well-calibrated.
+
+---
+
+### Adversarial — `adversarial_judge.py`
+
+5 responses designed to fool the judge. All caught.
+
+```
+ID       Type                    Correct   Complete   Concise   Avg    Fooled?
+adv_001  fluent_but_wrong           1         2          3      2.0    caught ✓
+adv_002  fluent_but_wrong           1         1          5      2.3    caught ✓
+adv_003  verbose_padding            4         2          1      2.3    caught ✓
+adv_004  overformatted              5         5          2      4.0    caught ✓
+adv_005  confident_hallucination    1         2          2      1.7    caught ✓
+
+Judge fooled: 0/5
+```
+
+Notable: `adv_004` scored 4.0 overall because the content was actually correct — just wrapped in unnecessary markdown. The judge correctly gave 2/5 conciseness while acknowledging correctness. That's the right call.
+
+`adv_005` is the most important case — full of authoritative-sounding but wrong details (5-way handshake, Tim Berners-Lee invented UDP, wrong port numbers). Scored 1/5 correctness. The judge didn't get fooled by confident tone.
+
+---
+
+### Phase 6 Summary
+
+```
+Test                 Result
+───────────────────  ──────────────────────────────────────────
+Consistency          5/5 stable, zero variance at temperature=0
+Calibration          0.93 avg Spearman correlation vs human
+Adversarial          0/5 fooled
+```
+
+The judge is trustworthy. Scores from Phase 5 can be used with confidence for relative comparisons.
 
 ---
 
