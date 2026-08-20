@@ -436,9 +436,30 @@ First run: judge wrapped JSON in markdown code fences. Fixed by stripping fences
 
 ## Phase 6 — Validate the Judge
 
+A judge is a model with its own failure modes. If you use it to certify a system without validating the judge itself, you've added an unaudited component to your audit pipeline.
+
+Three things to test:
+
+```
+Consistency   Same input → same score every time?
+              If not, scores are noise, not signal.
+
+Calibration   Does the judge agree with human labels?
+              Measures whether the judge tracks what humans care about.
+              Spearman correlation < 0.70 means it's measuring something else.
+
+Adversarial   Can a bad response fool it?
+              Fluent-but-wrong, verbose-but-empty, over-formatted.
+              If yes, the judge measures surface quality — not actual quality.
+```
+
+This is directly relevant to AIUC — they are building a certification product. Their own eval methodology has to be auditable or the certificate means nothing.
+
 Three scripts in `evaluator_validation/`. All run at temperature=0 against the same OpenRouter judge used in Phase 5.
 
 ---
+
+## Phase 6 — Findings
 
 ### Consistency — `judge_consistency.py`
 
