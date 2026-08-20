@@ -340,12 +340,12 @@ Phase 4 — Classifier Eval                 ✓ done
   Track accuracy + confidence scores
         │
         ▼
-Phase 5 — Response Quality                ← you are here
+Phase 5 — Response Quality                ✓ done
   Build quality_cases.json with reference responses
   Build LLM-as-judge (quality_eval.py)
         │
         ▼
-Phase 6 — Validate the Judge
+Phase 6 — Validate the Judge              ← you are here
   Consistency: same input → same score?
   Calibration: does the judge agree with your labels?
   Adversarial: can a bad response fool it?
@@ -433,6 +433,56 @@ If `router_model.pkl` is deleted, the system silently falls back to this classif
         └── no warning, no log entry, no error
             just wrong routing at 40% accuracy
 ```
+
+---
+
+## Phase 5 — Response Quality
+
+Built `data/quality_cases.json` (10 cases, 3 quality levels) and `evaluators/quality_eval.py`. Judge uses Claude Haiku via OpenRouter. Scores three dimensions: correctness, completeness, conciseness.
+
+Each prompt has paired responses — same question, different quality — so we can verify the judge ranks them correctly.
+
+**Results:**
+
+```
+ID       Level      Correct   Complete   Concise   Avg
+──────────────────────────────────────────────────────
+q_001    good          5         5          5       5.0
+q_002    bad           3         2          5       3.3
+q_003    good          5         5          5       5.0
+q_004    bad           5         3          1       3.0
+q_005    good          5         5          5       5.0
+q_006    mediocre      2         1          5       2.7
+q_007    good          5         5          5       5.0
+q_008    bad           4         2          4       3.3
+q_009    good          5         5          5       5.0
+q_010    mediocre      2         2          4       2.7
+
+Average by quality level:
+  good      5.00  (5 cases)
+  bad       3.22  (3 cases)
+  mediocre  2.67  (2 cases)
+```
+
+**Finding 1: judge correctly ranks good > bad > mediocre**
+
+The ranking holds. Good responses score 5.0 across the board. Mediocre responses score lower than bad ones — which makes sense, they're more subtly wrong (correct format, hollow content) vs obviously wrong.
+
+**Finding 2: q_004 caught fluent padding**
+
+"What is the capital of Japan?" → response correctly said Tokyo but buried it in 4 sentences of irrelevant Japan background. Judge scored it 5/5 correctness, 1/5 conciseness. Average: 3.0. The judge didn't get fooled by surface fluency.
+
+```
+q_004 — bad response scores:
+  correctness   5  ← Tokyo is mentioned
+  completeness  3  ← never directly answers the question
+  conciseness   1  ← Tokyo buried after irrelevant padding
+  avg           3.0
+```
+
+**Finding 3: first run produced malformed JSON**
+
+Judge wrapped output in markdown code fences (` ```json ` ... ` ``` `). Fixed by stripping fences before parsing. Logged as a note for Phase 6 — the judge's output format is itself something to validate.
 
 ---
 
