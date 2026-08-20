@@ -4,11 +4,28 @@ Eval system for [`llm_inference_gateway`](https://github.com/xingvoong/llm_infer
 
 ---
 
-## Phase 1 — Explore
+## Files
 
-Before building any evaluator, run the system and observe what actually happens.
+```
+phase1_explore.py              # Phase 1: run classifier on 20 prompts, observe failures
 
-**The system under test:**
+data/
+  routing_cases.json           # 15 routing test cases (hand-written from Phase 1 failures)
+  classifier_cases.json        # 20 classifier test cases with expected labels
+  quality_cases.json           # 10 response quality cases with reference responses
+  quality_results.json         # Judge scores from Phase 5
+
+evaluators/
+  routing_eval.py              # Deterministic routing correctness check
+  classifier_eval.py           # Classifier accuracy + confidence score tracking
+  quality_eval.py              # LLM-as-judge via OpenRouter
+```
+
+Start with the README to understand why decisions were made. Then walk through `routing_eval.py` and `quality_eval.py` as the two most interesting pieces of code.
+
+---
+
+## The System Under Test
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -44,300 +61,31 @@ Before building any evaluator, run the system and observe what actually happens.
 └─────────────────────────────────────────────────────────┘
 ```
 
-**What to do:**
-
-1. Run the classifier on 20 prompts manually — mix of task types
-2. Record what label it returns and whether that label is correct
-3. Note any surprises: wrong labels, low confidence, ambiguous cases
-4. Do the same for routing — does the right model get picked?
-
-No framework yet. Just observations written down.
-
-**Questions to answer by the end of Phase 1:**
-
-- Where does the classifier get it wrong?
-- Which routing rule is hardest to reason about?
-- What does a failure actually look like in this system?
-
----
-
-## Phase 1 — Findings
-
-Ran `phase1_explore.py` on 20 prompts (5 per label + 2 ambiguous).
-
-**Overall classifier accuracy: 8/18 = 44%**
-
-The classifier is wrong more than half the time.
-
-```
-Label               Prompts   Correct   Accuracy
-──────────────────  ───────   ───────   ────────
-code generation        5         2        40%
-summarization          5         5       100%
-question answering     5         1        20%
-general chat           3         0         0%
-```
-
-**Finding 1: "summarization" is the default label**
-
-The classifier predicted summarization 11 out of 20 times. It latches onto the word "summarize" in training data and maps anything slightly abstract to that label. Works great when the word appears in the prompt. Fails everywhere else.
-
-**Finding 2: "general chat" is effectively broken**
-
-The classifier never once predicted "general chat" as the top label. Not for "Hey, how are you doing today?", not for "I'm feeling overwhelmed with work." The label exists but the model doesn't use it.
-
-**Finding 3: low confidence is the norm, not the exception**
-
-Most wrong predictions landed between 0.32–0.42 confidence. The model is guessing. A correct prediction at 0.32 (prompt #1 — "Write a Python function...") is not reliable. A different phrasing of the same prompt will flip the label.
-
-```
-Prompt                                    Predicted      Confidence
-────────────────────────────────────────  ─────────────  ──────────
-Write a Python function to reverse a...  summarization     0.32   ✗
-What is the capital of Japan?            summarization     0.71   ✗  ← confident and wrong
-What does HTTP stand for?                code generation   0.46   ✗
-When did World War II end?               summarization     0.42   ✗
-Hey, how are you doing today?            question ans.     0.42   ✗
-```
-
-**Finding 4: wrong labels cause silent routing failures**
-
-The routing consequence of a wrong label isn't visible in the logs — you just see the wrong model got picked. "What is the capital of Japan?" gets labeled summarization → routes to Mistral-7B instead of GPT-4. A factual question gets the weaker model. No error raised.
-
-```
-Prompt                              Expected Label      Routed To    Should Be
-──────────────────────────────────  ──────────────      ─────────    ─────────
-What is the capital of Japan?       question ans.       Mistral-7B   gpt-4   ✗
-When did World War II end?          question ans.       Mistral-7B   gpt-4   ✗
-What is the difference btwn TCP/UDP question ans.       Mistral-7B   gpt-4   ✗
-I'm feeling overwhelmed with work.  general chat        Mistral-7B   gpt-4   ✗
-```
-
-**What this means for Phase 2**
-
-The classifier is the weakest part of the system. The rule-based routing (Rule 1 and Rule 2) works fine — those are deterministic. The problem is Rule 3, which depends entirely on a classifier that is unreliable for 3 of 4 labels.
-
-The dataset in Phase 2 should focus on the failure modes observed here: question answering mislabeled as summarization, general chat never predicted, and low-confidence code generation.
-
----
-
-## Phase 2 — First Dataset
-
-Every case in `data/routing_cases.json` traces back to something observed in Phase 1. No speculation.
-
-**Why not just write 40 cases covering everything equally?**
-
-Because Phase 1 showed the real problem is concentrated in 3 of 4 labels. Distributing cases evenly would have hidden that — summarization successes would have offset the failures and made the overall accuracy look better than it is.
-
-**15 cases, organized by what Phase 1 revealed:**
-
-```
-Cases       What they cover
-──────────  ───────────────────────────────────────────────────────
-r_001–003   QA mislabeled as summarization → wrong model (silent)
-r_004–005   General chat never predicted → wrong model
-r_006–007   Code gen mislabeled as summarization
-r_008–009   Summarization baseline — classifier works here
-r_010–011   Rule 1 and Rule 2 baselines (deterministic)
-r_012       Rule 1 vs Rule 2 conflict — priority=high wins
-r_013       Technical QA drifts toward code gen label
-r_014       Ambiguous case — flagged for review
-r_015       General chat routed correctly by accident (wrong label)
-```
-
-`r_012` is the most interesting case — `priority=high` and `max_cost=0.005` both apply. Rule 1 wins. This is undefined behavior in the codebase (no explicit conflict resolution), but the code happens to check `priority` first. Worth testing explicitly.
-
-```
-r_012 — { prompt: "What is the capital of Japan?", priority: "high", max_cost: 0.005 }
-
-Both rules fire on this request:
-
-  Rule 1: priority == "high"   →  gpt-4       (use best model, ignore cost)
-  Rule 2: max_cost < 0.01      →  Mistral-7B  (stay cheap, skip classifier)
-       │
-       │  conflict — which rule wins?
-       ▼
-
-How router.py resolves it (implicitly):
-
-  def route_request(prompt, priority, max_cost):
-      if priority == "high":          ← checked first → Rule 1 wins
-          return gpt-4
-      if max_cost < 0.01:             ← never reached
-          return Mistral-7B
-
-  Result: gpt-4   ✓
-
-
-Why this is worth an explicit test case:
-
-  Today              priority=high → gpt-4    (Rule 1 wins by code order)
-       │
-       │  someone reorders the if-blocks
-       ▼
-  Tomorrow           max_cost<0.01 → Mistral-7B  (Rule 2 now wins)
-                          │
-                          └── caller said "high priority", gets cheap model
-                              no error raised, no log warning
-```
-
-The conflict resolution is not documented anywhere in the codebase. It works by accident of if-block order. The eval pins that behavior so any reordering gets caught.
-
-`r_015` is a reminder that correct routing and correct label are not the same thing. "What do you think about AI taking over jobs?" routed to gpt-4 — right destination, but because the classifier called it "question answering", not "general chat". The routing was correct for the wrong reason.
-
-```
-r_015 — "What do you think about AI taking over jobs?"
-
-What actually happened:
-  prompt
-    │
-    ▼
-  classifier
-    │
-    └── predicted: question answering (0.66)   ← WRONG label
-                        │
-                        ▼
-                      gpt-4                    ← correct destination (by accident)
-
-
-What should have happened:
-  prompt
-    │
-    ▼
-  classifier
-    │
-    └── predicted: general chat               ← correct label
-                        │
-                        ▼
-                      gpt-4                   ← correct destination
-
-
-Why this is dangerous — if routing logic ever changes:
-  question answering  ──►  gpt-4        (today)
-  general chat        ──►  gpt-4        (today)
-       │
-       │  routing rule changes
-       ▼
-  question answering  ──►  Mistral-7B   (future)
-  general chat        ──►  gpt-4        (future)
-       │
-       └──  r_015 silently breaks — no error raised, wrong model used
-```
-
-A destination-only check would mark this as a pass today and miss the regression tomorrow.
-
----
-
-## Phase 3 — First Evaluator
-
-Build a deterministic evaluator that runs each routing case through the actual gateway logic. No LLM calls, no network requests — just routing decisions.
-
-**Design decisions:**
-
-- Import `route_request()` directly from the gateway — test the real code, not a copy
-- Mock `OpenAIProvider` and `HuggingFaceProvider` — we're testing routing, not responses
-- Check both `model` and `routing_reason` — destination alone isn't enough (see r_015)
-- Report per-rule breakdown, not just overall accuracy
-
-```
-routing_cases.json
-      │
-      ▼
-routing_eval.py
-      │
-      ├── sys.path.insert → gateway repo
-      ├── mock OpenAIProvider, HuggingFaceProvider
-      │
-      ├── for each case:
-      │     route_request(prompt, priority, max_cost)
-      │           │
-      │     returns (provider, actual_model, actual_reason)
-      │           │
-      │     assert actual_model == expected_model        ← destination
-      │     assert actual_reason == expected_reason      ← which rule fired
-      │
-      ▼
-Output:
-  • Pass/fail per case
-  • Failure reason (model mismatch, reason mismatch, or both)
-  • Per-rule breakdown
-  • Exit code 1 if any case fails  ← CI-ready
-```
-
-**What to do:**
-
-1. Write `evaluators/routing_eval.py`
-2. Run it — expect failures on first pass
-3. Diagnose failures, fix the dataset or the script
-4. Get it green
-
----
-
-## Phase 3 — Findings
-
-Built `evaluators/routing_eval.py`. Imports `route_request()` directly from the gateway, mocks LLM provider calls, runs all 15 cases.
-
-**First run: 3/15 passed (20%)**
-
-All failures had the same reason: `expected 'zero_shot:*' got 'learned_router'`. The gateway has a trained `router_model.pkl`, so `is_trained_model_available()` returns True and Rule 3 always uses the learned router — not the zero-shot classifier.
-
-Phase 1 tested the classifier in isolation by calling `classify_prompt()` directly. The actual system was never using it. The dataset was written against the wrong path.
-
-**Discovery: the learned router is better than the zero-shot classifier**
-
-```
-Prompt                                  Zero-shot result     Learned router result
-──────────────────────────────────────  ───────────────────  ─────────────────────
-What is the capital of Japan?           Mistral-7B  ✗        gpt-4  ✓
-I'm feeling overwhelmed with work.      Mistral-7B  ✗        gpt-4  ✓
-Give me a bash script to backup files   Mistral-7B  ✓        Mistral-7B  ✓
-Hey, how are you doing today?           gpt-4  ✓ (accident)  gpt-4  ✓ (correct)
-```
-
-Updated `routing_cases.json` to reflect reality — all Rule 3 cases now expect `learned_router`.
-
-**Second run: 15/15 passed (100%)**
-
-```
-Rule                 Pass   Fail
-──────────────────   ────   ────
-priority==high          1      0
-max_cost<0.01           1      0
-learned_router         12      0
-conflict (r_012)        1      0
-```
-
-The evaluator is green. Rule-based routing works. The learned router routes all test cases correctly.
-
 ---
 
 ## Project Plan
 
-Each phase builds on what was learned in the previous one. README updates at the end of each phase.
+Each phase builds on what was learned in the previous one.
 
 ```
 Phase 1 — Explore                         ✓ done
-  Run the system manually on 20 prompts
+  Run the system on 20 prompts manually
   Observe what fails and why
-  No code, just notes
         │
         ▼
 Phase 2 — First Dataset                   ✓ done
-  Write 10-15 routing test cases
-  Based on real failures from Phase 1
+  Write routing test cases from Phase 1 failures
   Hand-written, not generated
         │
         ▼
-Phase 3 — First Evaluator                 ✓ done
+Phase 3 — Routing Evaluator               ✓ done
   Build routing_eval.py
   Deterministic, no LLM dependency
-  Get it green
         │
         ▼
 Phase 4 — Classifier Eval                 ✓ done
   Build classifier_cases.json
   Build classifier_eval.py
-  Track accuracy + confidence scores
         │
         ▼
 Phase 5 — Response Quality                ✓ done
@@ -364,9 +112,205 @@ Phase 8 — CI
 
 ---
 
+## Phase 1 — Explore
+
+Before building any evaluator, run the system and observe what actually happens.
+
+**What to do:**
+
+1. Run the classifier on 20 prompts — mix of task types
+2. Record what label it returns and whether that label is correct
+3. Note wrong labels, low confidence, ambiguous cases
+
+No framework yet. Just observations written down.
+
+**Questions to answer:**
+
+- Where does the classifier get it wrong?
+- Which routing rule is hardest to reason about?
+- What does a failure actually look like in this system?
+
+---
+
+## Phase 1 — Findings
+
+Ran `phase1_explore.py` on 20 prompts (5 per label + 2 ambiguous).
+
+**Overall classifier accuracy: 8/18 = 44%**
+
+```
+Label               Prompts   Correct   Accuracy
+──────────────────  ───────   ───────   ────────
+code generation        5         2        40%
+summarization          5         5       100%
+question answering     5         1        20%
+general chat           3         0         0%
+```
+
+**Finding 1: "summarization" is the default label**
+
+The classifier predicted summarization 11 out of 20 times. It latches onto the word "summarize" and maps anything slightly abstract to that label. Works when the word appears in the prompt. Fails everywhere else.
+
+**Finding 2: "general chat" is effectively broken**
+
+Never predicted once — not for "Hey, how are you doing today?", not for "I'm feeling overwhelmed." The label exists but the model doesn't use it.
+
+**Finding 3: low confidence is the norm**
+
+Most wrong predictions landed between 0.32–0.42. The model is guessing. A correct prediction at 0.32 confidence is not reliable — a different phrasing of the same prompt will flip the label.
+
+```
+Prompt                                    Predicted      Confidence
+────────────────────────────────────────  ─────────────  ──────────
+Write a Python function to reverse a...  summarization     0.32   ✗
+What is the capital of Japan?            summarization     0.71   ✗  ← confident and wrong
+What does HTTP stand for?                code generation   0.46   ✗
+When did World War II end?               summarization     0.42   ✗
+Hey, how are you doing today?            question ans.     0.42   ✗
+```
+
+**Finding 4: wrong labels cause silent routing failures**
+
+"What is the capital of Japan?" gets labeled summarization → routes to Mistral-7B instead of gpt-4. A factual question gets the weaker model. No error raised.
+
+```
+Prompt                              Expected Label    Routed To    Should Be
+──────────────────────────────────  ──────────────    ─────────    ─────────
+What is the capital of Japan?       question ans.     Mistral-7B   gpt-4   ✗
+When did World War II end?          question ans.     Mistral-7B   gpt-4   ✗
+What is the difference btwn TCP/UDP question ans.     Mistral-7B   gpt-4   ✗
+I'm feeling overwhelmed with work.  general chat      Mistral-7B   gpt-4   ✗
+```
+
+---
+
+## Phase 2 — First Dataset
+
+Every case in `data/routing_cases.json` traces back to something observed in Phase 1. No speculation.
+
+**15 cases, organized by what Phase 1 revealed:**
+
+```
+Cases       What they cover
+──────────  ───────────────────────────────────────────────────────
+r_001–003   QA mislabeled as summarization → wrong model (silent)
+r_004–005   General chat never predicted → wrong model
+r_006–007   Code gen mislabeled as summarization
+r_008–009   Summarization baseline — classifier works here
+r_010–011   Rule 1 and Rule 2 baselines (deterministic)
+r_012       Rule 1 vs Rule 2 conflict — priority=high wins
+r_013       Technical QA drifts toward code gen label
+r_014       Ambiguous case — flagged for review
+r_015       General chat routed correctly by accident (wrong label)
+```
+
+**r_012 — rule conflict**
+
+`priority=high` and `max_cost=0.005` both apply. Rule 1 wins — but only because of if-block order, not documentation. The eval pins that behavior so a refactor doesn't silently break it.
+
+```
+  Rule 1: priority == "high"   →  gpt-4       ← checked first, wins
+  Rule 2: max_cost < 0.01      →  Mistral-7B  ← never reached
+
+  If someone reorders the if-blocks tomorrow:
+    caller said "high priority", gets the cheap model
+    no error raised, no log warning
+```
+
+**r_015 — correct routing, wrong reason**
+
+"What do you think about AI taking over jobs?" routed to gpt-4 — right destination, but labeled "question answering" not "general chat". Correct by accident.
+
+```
+  question answering  ──►  gpt-4   (today)     ← r_015 passes
+  general chat        ──►  gpt-4   (today)
+
+  If routing logic changes:
+  question answering  ──►  Mistral-7B  (future) ← r_015 silently breaks
+  general chat        ──►  gpt-4       (future)
+```
+
+A destination-only check would miss this regression entirely.
+
+---
+
+## Phase 3 — Routing Evaluator
+
+Imports `route_request()` directly from the gateway. Mocks LLM provider calls — no real API calls. Checks both model and routing reason.
+
+```
+routing_cases.json
+      │
+      ▼
+routing_eval.py
+      │
+      ├── mock OpenAIProvider, HuggingFaceProvider
+      ├── route_request(prompt, priority, max_cost)
+      │     → (provider, actual_model, actual_reason)
+      │
+      ├── assert actual_model == expected_model     ← destination
+      ├── assert actual_reason == expected_reason   ← which rule fired
+      │
+      ▼
+  pass/fail per case + per-rule breakdown + exit code 1 on failure
+```
+
+---
+
+## Phase 3 — Findings
+
+**First run: 3/15 passed (20%)**
+
+All failures: `expected 'zero_shot:*' got 'learned_router'`. The gateway has a trained `router_model.pkl` so Rule 3 always uses the learned router — the zero-shot classifier is never called. Phase 1 tested the classifier directly by calling `classify_prompt()`. The actual system was never using it.
+
+**Discovery: the learned router outperforms the zero-shot classifier**
+
+```
+Prompt                                Zero-shot           Learned router
+────────────────────────────────────  ──────────────────  ──────────────────
+What is the capital of Japan?         Mistral-7B  ✗       gpt-4  ✓
+I'm feeling overwhelmed with work.    Mistral-7B  ✗       gpt-4  ✓
+Give me a bash script to backup...    Mistral-7B  ✓       Mistral-7B  ✓
+Hey, how are you doing today?         gpt-4  ✓ (accident) gpt-4  ✓ (correct)
+```
+
+Updated `routing_cases.json` — all Rule 3 cases now expect `learned_router`.
+
+**Second run: 15/15 passed (100%)**
+
+```
+Rule                 Pass   Fail
+──────────────────   ────   ────
+priority==high          1      0
+max_cost<0.01           1      0
+learned_router         12      0
+conflict (r_012)        1      0
+```
+
+---
+
 ## Phase 4 — Classifier Eval
 
-Built `data/classifier_cases.json` (20 cases) and `evaluators/classifier_eval.py`. Cases grounded in Phase 1 failures — all 10 known mislabelings included with expected labels and notes.
+The classifier is the fallback when `router_model.pkl` is missing. Phase 4 measures how bad that fallback is.
+
+```
+classifier_cases.json
+      │
+      ▼
+classifier_eval.py
+      │
+      ├── calls classify_prompt() per case
+      ├── records predicted label + full confidence scores
+      │
+      ▼
+  accuracy + per-label F1 + confidence distribution
+```
+
+20 cases across 4 labels and 3 difficulty levels. All 10 known failures from Phase 1 are included.
+
+---
+
+## Phase 4 — Findings
 
 **Overall accuracy: 8/20 = 40%**
 
@@ -385,64 +329,72 @@ medium          2      5     29%
 hard            0      2      0%
 ```
 
-**Finding 1: confidence below 0.50 always means failure**
+**Finding 1: confidence < 0.50 always means failure**
 
-All 8 low-confidence predictions were wrong. The classifier is not just unreliable — it's perfectly miscalibrated at low confidence. A confidence threshold would catch every failure in this category.
+All 8 low-confidence predictions were wrong. A confidence threshold would catch every failure in this category.
 
 ```
-Low confidence failures (conf < 0.50):
-  c_006  conf=0.32  'Write a Python function to reverse a linked list.'   → summarization ✗
-  c_010  conf=0.33  'Write a SQL query to find top 5 customers...'        → question answering ✗
-  c_013  conf=0.42  'When did World War II end?'                          → summarization ✗
-  c_014  conf=0.46  'What does HTTP stand for?'                           → code generation ✗
-  c_015  conf=0.36  'What is the difference between TCP and UDP?'         → code generation ✗
-  c_016  conf=0.42  'Hey, how are you doing today?'                       → question answering ✗
-  c_017  conf=0.35  'I'm feeling overwhelmed with work lately.'           → summarization ✗
-  c_020  conf=0.37  'What's this do?'                                     → summarization ✗
+Low confidence failures (conf < 0.50) — all wrong:
+  c_006  conf=0.32  'Write a Python function to reverse a linked list.'
+  c_010  conf=0.33  'Write a SQL query to find top 5 customers...'
+  c_013  conf=0.42  'When did World War II end?'
+  c_014  conf=0.46  'What does HTTP stand for?'
+  c_015  conf=0.36  'What is the difference between TCP and UDP?'
+  c_016  conf=0.42  'Hey, how are you doing today?'
+  c_017  conf=0.35  'I'm feeling overwhelmed with work lately.'
+  c_020  conf=0.37  'What's this do?'
 ```
 
 **Finding 2: c_019 is the most dangerous failure**
 
-"Summarize this code and tell me if it has bugs" → summarization at **0.99 confidence**. The word "summarize" in the prompt completely dominates the prediction. The task is actually code review, which needs gpt-4. It gets routed to Mistral-7B with near-certainty.
+"Summarize this code and tell me if it has bugs" → summarization at 0.99 confidence. The word "summarize" hijacks the prediction entirely. Task is code review — needs gpt-4. Gets Mistral-7B with near-certainty.
 
 ```
   prompt: "Summarize this code and tell me if it has bugs."
       │
       ▼
-  classifier
-      │
-      └── summarization  0.99  ← word "summarize" hijacks everything
-          question ans.  0.01
-          general chat   0.00
-          code gen       0.00  ← correct label, lowest score
+  classifier: summarization 0.99  ← "summarize" dominates
+              code gen       0.00  ← correct label, lowest score
       │
       ▼
-  Mistral-7B  ✗  (needed gpt-4 for code review)
+  Mistral-7B  ✗
 ```
 
-High confidence + wrong label + wrong model. No error raised.
-
-**Finding 3: the fallback path is dangerous**
-
-If `router_model.pkl` is deleted, the system silently falls back to this classifier. The routing accuracy would drop from 100% (learned router) to roughly 40%. Four out of every ten requests would go to the wrong model — silently.
+**Finding 3: the fallback is quietly dangerous**
 
 ```
-  router_model.pkl exists     →  learned_router  →  15/15 correct  ✓
-  router_model.pkl missing    →  classifier      →  ~8/20 correct  ✗
+  router_model.pkl exists   →  learned_router  →  15/15 correct  ✓
+  router_model.pkl missing  →  classifier      →  ~8/20 correct  ✗
         │
         └── no warning, no log entry, no error
-            just wrong routing at 40% accuracy
 ```
 
 ---
 
 ## Phase 5 — Response Quality
 
-Built `data/quality_cases.json` (10 cases, 3 quality levels) and `evaluators/quality_eval.py`. Judge uses Claude Haiku via OpenRouter. Scores three dimensions: correctness, completeness, conciseness.
+Judge uses Claude Haiku via OpenRouter. Scores correctness, completeness, and conciseness (1–5) against a reference response. Each prompt has paired responses at different quality levels so the ranking can be verified.
 
-Each prompt has paired responses — same question, different quality — so we can verify the judge ranks them correctly.
+```
+quality_cases.json
+      │
+      ▼
+quality_eval.py
+      │
+      ├── for each case: prompt + reference + candidate → judge
+      ├── judge returns structured JSON scores
+      ├── strips markdown fences before parsing
+      │
+      ▼
+  scores per dimension + average by quality level
+  results saved to data/quality_results.json
+```
 
-**Results:**
+---
+
+## Phase 5 — Findings
+
+**Results: judge correctly ranks good > bad > mediocre**
 
 ```
 ID       Level      Correct   Complete   Concise   Avg
@@ -459,30 +411,26 @@ q_009    good          5         5          5       5.0
 q_010    mediocre      2         2          4       2.7
 
 Average by quality level:
-  good      5.00  (5 cases)
-  bad       3.22  (3 cases)
-  mediocre  2.67  (2 cases)
+  good      5.00
+  bad       3.22
+  mediocre  2.67
 ```
 
-**Finding 1: judge correctly ranks good > bad > mediocre**
+**Finding 1: fluent padding didn't fool the judge**
 
-The ranking holds. Good responses score 5.0 across the board. Mediocre responses score lower than bad ones — which makes sense, they're more subtly wrong (correct format, hollow content) vs obviously wrong.
-
-**Finding 2: q_004 caught fluent padding**
-
-"What is the capital of Japan?" → response correctly said Tokyo but buried it in 4 sentences of irrelevant Japan background. Judge scored it 5/5 correctness, 1/5 conciseness. Average: 3.0. The judge didn't get fooled by surface fluency.
+q_004 — "What is the capital of Japan?" answered with 4 sentences of irrelevant Japan background, Tokyo buried at the end. Judge scored 5/5 correctness, 1/5 conciseness. Average: 3.0. Surface fluency didn't inflate the score.
 
 ```
-q_004 — bad response scores:
+q_004 bad response:
   correctness   5  ← Tokyo is mentioned
   completeness  3  ← never directly answers the question
   conciseness   1  ← Tokyo buried after irrelevant padding
   avg           3.0
 ```
 
-**Finding 3: first run produced malformed JSON**
+**Finding 2: judge output format is variable**
 
-Judge wrapped output in markdown code fences (` ```json ` ... ` ``` `). Fixed by stripping fences before parsing. Logged as a note for Phase 6 — the judge's output format is itself something to validate.
+First run: judge wrapped JSON in markdown code fences. Fixed by stripping fences before parsing. Signals that Phase 6 (judge validation) is necessary — the judge's own reliability needs to be tested.
 
 ---
 
