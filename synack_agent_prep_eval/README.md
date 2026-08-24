@@ -42,6 +42,20 @@ Multi-Agent (Module 2): Orchestrator → CVEResearcher + PatchChecker (parallel)
 
 ## Findings
 
+### Phase 2 — Tool routing
+
+9/9 passed. `run_tool()` dispatches correctly to all three tools and handles unknown tool names cleanly.
+
+Key things confirmed:
+- `search_cve` routes to the `cveId` param when the query starts with "CVE-", keyword param otherwise
+- `get_cve_details` correctly parses CVSS score and severity from nested NVD response — the metrics object has three possible version keys (`cvssMetricV31`, `cvssMetricV30`, `cvssMetricV2`) and the code tries them in order
+- Empty NVD responses return friendly messages rather than crashing
+- `summarize_findings` is pure Python — no HTTP, no mocking needed
+
+No gaps found. The dispatch and parsing logic is solid.
+
+---
+
 ### Phase 1 — Guardrail gap
 
 `"IGNORE YOUR PREVIOUS INSTRUCTIONS"` bypasses `validate_input()`.
