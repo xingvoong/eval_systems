@@ -46,13 +46,9 @@ Multi-Agent (Module 2): Orchestrator → CVEResearcher + PatchChecker (parallel)
 
 9/9 passed. `run_tool()` dispatches correctly to all three tools and handles unknown tool names cleanly.
 
-Key things confirmed:
-- `search_cve` routes to the `cveId` param when the query starts with "CVE-", keyword param otherwise
-- `get_cve_details` correctly parses CVSS score and severity from nested NVD response — the metrics object has three possible version keys (`cvssMetricV31`, `cvssMetricV30`, `cvssMetricV2`) and the code tries them in order
-- Empty NVD responses return friendly messages rather than crashing
-- `summarize_findings` is pure Python — no HTTP, no mocking needed
+`search_cve` routes to the `cveId` NVD param when the query starts with "CVE-", keyword param otherwise. `get_cve_details` parses CVSS score and severity from a nested response — the metrics object has three possible version keys (`cvssMetricV31`, `cvssMetricV30`, `cvssMetricV2`) and the code tries them in order. Empty NVD responses return a friendly message rather than crashing. `summarize_findings` is pure Python — no HTTP, no mocking needed.
 
-No gaps found. The dispatch and parsing logic is solid.
+No gaps found.
 
 ---
 
