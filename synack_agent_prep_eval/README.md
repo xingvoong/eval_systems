@@ -228,6 +228,30 @@ tool_routing_eval.py
 
 ---
 
+## Phase 2 — Findings
+
+**Result: 9/9 passed**
+
+```
+ID       Tool                  Notes
+────────────────────────────────────────────────────────────────────────
+t_001    search_cve            keyword search returns CVE list
+t_002    search_cve            CVE ID search routes to cveId param
+t_003    search_cve            empty NVD response → friendly message
+t_004    get_cve_details       parses severity from CVSS metrics
+t_005    get_cve_details       parses CVSS base score
+t_006    get_cve_details       unknown CVE ID → not found message
+t_007    summarize_findings    brief format returns summary header
+t_008    summarize_findings    detailed format returns full report header
+t_009    unknown_tool          unrecognized name → "Unknown tool: ..."
+```
+
+`search_cve` checks whether the query starts with "CVE-" and routes to the `cveId` NVD param if true, the `keywordSearch` param otherwise. `get_cve_details` parses severity from a nested metrics object — the code tries three version keys in order (`cvssMetricV31`, `cvssMetricV30`, `cvssMetricV2`) and takes the first match. Empty NVD responses (`"vulnerabilities": []`) return a friendly string rather than crashing. `summarize_findings` is pure Python with no HTTP — no mocking needed.
+
+No gaps found.
+
+---
+
 ## Phase 3 — Degradation Eval
 
 The multi-agent orchestrator in `02_multi_agent/orchestrator.py` has explicit degradation logic. The eval checks that it behaves correctly under worker failure — returning partial results instead of crashing.
@@ -280,27 +304,3 @@ d_004    all_succeed           All workers pass → final report returned       
 All three degradation paths behave as documented. The most important case is `d_003` — PatchChecker failure has no early return. The orchestrator continues to synthesis and includes `"Patch information unavailable."` in the prompt. The final report is degraded but not broken.
 
 One mocking gotcha found during setup: patching `mock_workers.run_cve_researcher` after module load has no effect. The orchestrator uses `from workers import run_cve_researcher` which binds the name at import time. The fix is to patch `orchestrator_module.run_cve_researcher` directly — replacing the reference in the orchestrator's own namespace.
-
----
-
-## Phase 2 — Findings
-
-**Result: 9/9 passed**
-
-```
-ID       Tool                  Notes
-────────────────────────────────────────────────────────────────────────
-t_001    search_cve            keyword search returns CVE list
-t_002    search_cve            CVE ID search routes to cveId param
-t_003    search_cve            empty NVD response → friendly message
-t_004    get_cve_details       parses severity from CVSS metrics
-t_005    get_cve_details       parses CVSS base score
-t_006    get_cve_details       unknown CVE ID → not found message
-t_007    summarize_findings    brief format returns summary header
-t_008    summarize_findings    detailed format returns full report header
-t_009    unknown_tool          unrecognized name → "Unknown tool: ..."
-```
-
-`search_cve` checks whether the query starts with "CVE-" and routes to the `cveId` NVD param if true, the `keywordSearch` param otherwise. `get_cve_details` parses severity from a nested metrics object — the code tries three version keys in order (`cvssMetricV31`, `cvssMetricV30`, `cvssMetricV2`) and takes the first match. Empty NVD responses (`"vulnerabilities": []`) return a friendly string rather than crashing. `summarize_findings` is pure Python with no HTTP — no mocking needed.
-
-No gaps found.
