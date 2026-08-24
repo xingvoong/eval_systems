@@ -288,6 +288,25 @@ degradation_eval.py
 
 ---
 
+## Phase 3 — Findings
+
+**Result: 4/4 passed**
+
+```
+ID       Scenario              Notes                                          Result
+────────────────────────────────────────────────────────────────────────────────────
+d_001    researcher_fails      CVEResearcher fails → early return             "Research failed: Connection timeout"
+d_002    assessor_fails        SeverityAssessor fails → research only         "Research findings (assessment unavailable): ..."
+d_003    patch_checker_fails   PatchChecker fails → synthesis still runs      "...Patch information unavailable..."
+d_004    all_succeed           All workers pass → final report returned        "Log4Shell is a critical RCE. CVSS 10.0..."
+```
+
+All three degradation paths behave as documented. The most important case is `d_003` — PatchChecker failure has no early return. The orchestrator continues to synthesis and includes `"Patch information unavailable."` in the prompt. The final report is degraded but not broken.
+
+One mocking gotcha found during setup: patching `mock_workers.run_cve_researcher` after module load has no effect. The orchestrator uses `from workers import run_cve_researcher` which binds the name at import time. The fix is to patch `orchestrator_module.run_cve_researcher` directly — replacing the reference in the orchestrator's own namespace.
+
+---
+
 ## Phase 4 — Response Quality Eval
 
 Judge uses `openai/gpt-oss-20b` via Groq. Scores accuracy, completeness, and conciseness (1–5) against a reference response. Eight cases across three quality levels — good, mediocre, bad — covering Log4Shell, Heartbleed, and EternalBlue.
@@ -351,22 +370,3 @@ The mediocre responses are vague and padded — they score 1 on accuracy because
 A well-structured bad answer scores the same completeness as a good answer. Completeness measures whether the response *addresses* the question, not whether it's *correct*. For CVE research, accuracy is the only dimension that matters for safety.
 
 This signals that Phase 5 (judge validation) needs to probe whether the judge is measuring accuracy reliably or rewarding fluency.
-
----
-
-## Phase 3 — Findings
-
-**Result: 4/4 passed**
-
-```
-ID       Scenario              Notes                                          Result
-────────────────────────────────────────────────────────────────────────────────────
-d_001    researcher_fails      CVEResearcher fails → early return             "Research failed: Connection timeout"
-d_002    assessor_fails        SeverityAssessor fails → research only         "Research findings (assessment unavailable): ..."
-d_003    patch_checker_fails   PatchChecker fails → synthesis still runs      "...Patch information unavailable..."
-d_004    all_succeed           All workers pass → final report returned        "Log4Shell is a critical RCE. CVSS 10.0..."
-```
-
-All three degradation paths behave as documented. The most important case is `d_003` — PatchChecker failure has no early return. The orchestrator continues to synthesis and includes `"Patch information unavailable."` in the prompt. The final report is degraded but not broken.
-
-One mocking gotcha found during setup: patching `mock_workers.run_cve_researcher` after module load has no effect. The orchestrator uses `from workers import run_cve_researcher` which binds the name at import time. The fix is to patch `orchestrator_module.run_cve_researcher` directly — replacing the reference in the orchestrator's own namespace.
