@@ -31,7 +31,7 @@ Multi-Agent (Module 2): Orchestrator → CVEResearcher + PatchChecker (parallel)
 | Phase | What | Why | Result |
 |---|---|---|---|
 | 1 — Guardrail Eval | Input blocking, output scanning | Pure Python — no LLM, fast, easy to silently break with a regex change | 19/20 — 1 gap found |
-| 2 — Tool Routing Eval | run_tool() dispatch, NVD parsing (mocked HTTP) | Tests parsing logic without flaky network calls | — |
+| 2 — Tool Routing Eval | run_tool() dispatch, NVD parsing (mocked HTTP) | Tests parsing logic without flaky network calls | 9/9 |
 | 3 — Degradation Eval | Worker timeout → partial result, not crash | Graceful degradation is easy to silently break in a refactor | — |
 | 4 — Response Quality | LLM-as-judge: CVE answers accurate and grounded? | Catches hallucinated CVE IDs and severity scores | — |
 | 5 — Judge Validation | Consistency, calibration, adversarial | A judge that scores everything 4/5 is useless — prove it measures something real | — |

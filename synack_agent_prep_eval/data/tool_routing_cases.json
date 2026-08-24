@@ -1,0 +1,74 @@
+[
+  {
+    "id": "t_001",
+    "tool": "search_cve",
+    "args": {"query": "heartbleed"},
+    "mock_scenario": "search_results",
+    "expected_contains": "CVE-2014-0160",
+    "notes": "keyword search returns CVE list"
+  },
+  {
+    "id": "t_002",
+    "tool": "search_cve",
+    "args": {"query": "CVE-2021-44228"},
+    "mock_scenario": "log4j_results",
+    "expected_contains": "CVE-2021-44228",
+    "notes": "CVE ID search routes to cveId param"
+  },
+  {
+    "id": "t_003",
+    "tool": "search_cve",
+    "args": {"query": "nonexistent vulnerability xyz"},
+    "mock_scenario": "empty_results",
+    "expected_contains": "No CVEs found",
+    "notes": "empty NVD response returns friendly message"
+  },
+  {
+    "id": "t_004",
+    "tool": "get_cve_details",
+    "args": {"cve_id": "CVE-2014-0160"},
+    "mock_scenario": "heartbleed_details",
+    "expected_contains": "HIGH",
+    "notes": "parses severity from CVSS metrics"
+  },
+  {
+    "id": "t_005",
+    "tool": "get_cve_details",
+    "args": {"cve_id": "CVE-2014-0160"},
+    "mock_scenario": "heartbleed_details",
+    "expected_contains": "5.0",
+    "notes": "parses CVSS base score"
+  },
+  {
+    "id": "t_006",
+    "tool": "get_cve_details",
+    "args": {"cve_id": "CVE-9999-0000"},
+    "mock_scenario": "empty_results",
+    "expected_contains": "CVE not found",
+    "notes": "unknown CVE ID returns not found message"
+  },
+  {
+    "id": "t_007",
+    "tool": "summarize_findings",
+    "args": {"findings": "CVE-2014-0160 is critical.\nAffects OpenSSL.\nPatch available.", "format": "brief"},
+    "mock_scenario": null,
+    "expected_contains": "Summary",
+    "notes": "brief format returns summary header"
+  },
+  {
+    "id": "t_008",
+    "tool": "summarize_findings",
+    "args": {"findings": "CVE-2014-0160 is critical.\nAffects OpenSSL.\nPatch available.", "format": "detailed"},
+    "mock_scenario": null,
+    "expected_contains": "Detailed Report",
+    "notes": "detailed format returns full report header"
+  },
+  {
+    "id": "t_009",
+    "tool": "unknown_tool",
+    "args": {},
+    "mock_scenario": null,
+    "expected_contains": "Unknown tool",
+    "notes": "unrecognized tool name returns error string"
+  }
+]
