@@ -1,0 +1,154 @@
+[
+  {
+    "id": "q_001",
+    "quality_level": "good",
+    "prompt": "What is Log4Shell and how do I fix it?",
+    "response": "CVE-2021-44228 (Log4Shell) is a critical remote code execution vulnerability in Apache Log4j2. CVSS score: 10.0. An attacker who can control log messages can execute arbitrary code via JNDI lookup substitution. Fix: upgrade to Log4j 2.16.0 or later (also fixed in 2.12.2, 2.12.3, and 2.3.1).",
+    "reference_response": "CVE-2021-44228 (Log4Shell) is a critical RCE in Apache Log4j2. CVSS 10.0. JNDI features allow attackers who control log input to execute arbitrary code. Fix: upgrade to 2.16.0, 2.12.2, 2.12.3, or 2.3.1.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate response accurately lists the CVE ID, CVSS score, severity, description, and correct fix options without unnecessary detail."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_002",
+    "quality_level": "bad",
+    "prompt": "What is Log4Shell and how do I fix it?",
+    "response": "Log4Shell (CVE-2021-44228) is a high severity vulnerability in Apache Tomcat with a CVSS score of 8.5. It allows attackers to read files from the server. Fix by upgrading to Log4j 2.14.0 or applying the vendor patch.",
+    "reference_response": "CVE-2021-44228 (Log4Shell) is a critical RCE in Apache Log4j2. CVSS 10.0. JNDI features allow attackers who control log input to execute arbitrary code. Fix: upgrade to 2.16.0, 2.12.2, 2.12.3, or 2.3.1.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 1,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The response contains multiple factual errors (wrong software, severity, CVSS, and fix) but includes all required elements and is concise."
+    },
+    "avg": 3.7
+  },
+  {
+    "id": "q_003",
+    "quality_level": "good",
+    "prompt": "Tell me about Heartbleed.",
+    "response": "Heartbleed (CVE-2014-0160) is a HIGH severity vulnerability in OpenSSL 1.0.1 before 1.0.1g. CVSS: 7.5. A flaw in the TLS/DTLS Heartbeat Extension allows remote attackers to read up to 64KB of server memory per request, potentially exposing private keys, passwords, and session tokens. Fix: upgrade to OpenSSL 1.0.1g.",
+    "reference_response": "Heartbleed (CVE-2014-0160) is a HIGH severity buffer over-read in OpenSSL 1.0.1 before 1.0.1g. CVSS 7.5. Attackers can remotely read server memory via crafted Heartbeat packets. Fix: upgrade to OpenSSL 1.0.1g.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The response accurately lists the CVE ID, severity, CVSS score, affected software, provides a concise description of the vulnerability, and states the correct fix."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_004",
+    "quality_level": "bad",
+    "prompt": "Tell me about Heartbleed.",
+    "response": "Heartbleed is CVE-2014-0161, a critical vulnerability in OpenSSL with a CVSS score of 9.8. It allows attackers to execute remote code on web servers. The fix is to upgrade to OpenSSL 1.1.0 and rotate all certificates.",
+    "reference_response": "Heartbleed (CVE-2014-0160) is a HIGH severity buffer over-read in OpenSSL 1.0.1 before 1.0.1g. CVSS 7.5. Attackers can remotely read server memory via crafted Heartbeat packets. Fix: upgrade to OpenSSL 1.0.1g.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 1,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate contains multiple factual errors (wrong CVE ID, score, severity, affected version) but includes all required elements and is concise."
+    },
+    "avg": 3.7
+  },
+  {
+    "id": "q_005",
+    "quality_level": "good",
+    "prompt": "What is EternalBlue?",
+    "response": "EternalBlue (CVE-2017-0144) is a HIGH severity RCE vulnerability in the Windows SMBv1 server. CVSS: 8.8. Affects Windows Vista SP2 through Windows 10 1607 and Windows Server 2016. Exploited by WannaCry and NotPetya ransomware. Fix: apply Microsoft security update MS17-010.",
+    "reference_response": "EternalBlue (CVE-2017-0144) exploits a flaw in Windows SMBv1. CVSS 8.8. Allows remote code execution on unpatched Windows systems. Fix: apply MS17-010 patch.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 5,
+      "completeness": 5,
+      "conciseness": 5,
+      "reasoning": "The candidate correctly lists the CVE, CVSS score, severity, affected OS, and fix, providing all required elements in a concise, factual manner."
+    },
+    "avg": 5.0
+  },
+  {
+    "id": "q_006",
+    "quality_level": "mediocre",
+    "prompt": "What is EternalBlue?",
+    "response": "EternalBlue is a well-known vulnerability that was used in several major cyberattacks. It affects Windows systems and was originally developed by the NSA before being leaked by the Shadow Brokers group in 2017. The vulnerability relates to the SMB protocol and can allow attackers to gain access to systems. Microsoft has released patches to address this issue and users are advised to keep their systems updated.",
+    "reference_response": "EternalBlue (CVE-2017-0144) exploits a flaw in Windows SMBv1. CVSS 8.8. Allows remote code execution on unpatched Windows systems. Fix: apply MS17-010 patch.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 1,
+      "completeness": 2,
+      "conciseness": 3,
+      "reasoning": "The response omits the CVE ID, CVSS score, and severity, includes extraneous details, and lacks the precise fix reference, making it inaccurate and incomplete."
+    },
+    "avg": 2.0
+  },
+  {
+    "id": "q_007",
+    "quality_level": "mediocre",
+    "prompt": "What is Log4Shell and how do I fix it?",
+    "response": "Log4Shell is a very serious vulnerability discovered in 2021. It affects many systems that use Java logging. Organizations around the world were affected and had to scramble to patch their systems. The vulnerability was widely reported in the news. It is related to a feature in the logging library that allows dynamic lookups. Security teams worked overtime to address it. It is considered one of the worst vulnerabilities ever discovered due to how widely Log4j is used.",
+    "reference_response": "CVE-2021-44228 (Log4Shell) is a critical RCE in Apache Log4j2. CVSS 10.0. JNDI features allow attackers who control log input to execute arbitrary code. Fix: upgrade to 2.16.0, 2.12.2, 2.12.3, or 2.3.1.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 1,
+      "completeness": 1,
+      "conciseness": 1,
+      "reasoning": "The response lacks the CVE ID, CVSS score, specific severity, affected software details, and the recommended fix, and it is overly verbose."
+    },
+    "avg": 1.0
+  },
+  {
+    "id": "q_008",
+    "quality_level": "bad",
+    "prompt": "What is EternalBlue?",
+    "response": "EternalBlue (CVE-2017-0199) is a critical vulnerability in Windows Remote Desktop Protocol with a CVSS score of 9.3. It allows unauthenticated attackers to crash Windows systems. Fix: disable RDP or upgrade to Windows 11.",
+    "reference_response": "EternalBlue (CVE-2017-0144) exploits a flaw in Windows SMBv1. CVSS 8.8. Allows remote code execution on unpatched Windows systems. Fix: apply MS17-010 patch.",
+    "quality_dimensions": [
+      "accuracy",
+      "completeness",
+      "conciseness"
+    ],
+    "scores": {
+      "accuracy": 1,
+      "completeness": 4,
+      "conciseness": 5,
+      "reasoning": "The candidate contains incorrect CVE ID, severity, affected software, and fix, but it does mention all required elements, and it is concise."
+    },
+    "avg": 3.3
+  }
+]

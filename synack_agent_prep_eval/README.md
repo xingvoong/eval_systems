@@ -98,7 +98,7 @@ Phase 3 — Degradation Eval                ✓ done
   Multi-agent graceful degradation
         │
         ▼
-Phase 4 — Response Quality                — todo
+Phase 4 — Response Quality                ✓ done
   LLM-as-judge: CVE answers accurate and grounded?
         │
         ▼
@@ -285,6 +285,72 @@ degradation_eval.py
       ▼
   pass/fail per scenario + exit code 1 on failure
 ```
+
+---
+
+## Phase 4 — Response Quality Eval
+
+Judge uses `openai/gpt-oss-20b` via Groq. Scores accuracy, completeness, and conciseness (1–5) against a reference response. Eight cases across three quality levels — good, mediocre, bad — covering Log4Shell, Heartbleed, and EternalBlue.
+
+```
+quality_cases.json  (8 cases)
+      │
+      ▼
+quality_eval.py
+      │
+      ├── load GROQ_API_KEY from synack-agent-prep/.env
+      ├── for each case: prompt + reference + candidate → judge
+      ├── judge returns structured JSON scores
+      ├── strip markdown fences before parsing
+      │
+      ▼
+  scores per dimension + average by quality level
+  results saved to data/quality_results.json
+```
+
+---
+
+## Phase 4 — Findings
+
+**Results: judge correctly ranks good > bad > mediocre**
+
+```
+ID       Level      Accuracy   Complete   Concise    Avg
+─────────────────────────────────────────────────────────────────
+q_001    good          5          5          5        5.0
+q_002    bad           1          5          5        3.7
+q_003    good          5          5          5        5.0
+q_004    bad           1          5          5        3.7
+q_005    good          5          5          5        5.0
+q_006    mediocre      1          2          3        2.0
+q_007    mediocre      1          1          1        1.0
+q_008    bad           1          4          5        3.3
+
+Average by quality level:
+  good      5.0
+  bad       3.6
+  mediocre  1.5
+```
+
+**Finding 1: bad scores higher than mediocre**
+
+Bad responses average 3.6, mediocre averages 1.5. That's inverted. The bad responses contain wrong CVE IDs, wrong CVSS scores, and hallucinated fix versions — but they're fluent, well-structured, and complete-sounding. The judge gives them high completeness and conciseness scores, which pulls the average up.
+
+```
+q_002 bad response: wrong product (Tomcat), wrong CVSS (8.5), wrong fix (2.14.0)
+  accuracy    1  ← judge caught the errors
+  completeness 5  ← response is fluent and covers all sections
+  conciseness  5  ← tight and direct
+  avg          3.7
+```
+
+The mediocre responses are vague and padded — they score 1 on accuracy because they contain no verifiable facts, and 1 on completeness because they omit CVE ID, CVSS, and fix version.
+
+**Finding 2: accuracy is the signal, completeness is noise**
+
+A well-structured bad answer scores the same completeness as a good answer. Completeness measures whether the response *addresses* the question, not whether it's *correct*. For CVE research, accuracy is the only dimension that matters for safety.
+
+This signals that Phase 5 (judge validation) needs to probe whether the judge is measuring accuracy reliably or rewarding fluency.
 
 ---
 
