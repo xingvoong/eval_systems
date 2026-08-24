@@ -1,0 +1,26 @@
+[
+  {
+    "id": "d_001",
+    "scenario": "researcher_fails",
+    "expected_contains": "Research failed",
+    "notes": "CVEResearcher failure → early return, no synthesis"
+  },
+  {
+    "id": "d_002",
+    "scenario": "assessor_fails",
+    "expected_contains": "assessment unavailable",
+    "notes": "SeverityAssessor failure → returns research findings only"
+  },
+  {
+    "id": "d_003",
+    "scenario": "patch_checker_fails",
+    "expected_contains": "Patch information unavailable",
+    "notes": "PatchChecker failure → synthesis still runs with partial data"
+  },
+  {
+    "id": "d_004",
+    "scenario": "all_succeed",
+    "expected_contains": "Log4Shell",
+    "notes": "All workers succeed → synthesis returns final report"
+  }
+]

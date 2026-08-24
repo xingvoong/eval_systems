@@ -93,7 +93,7 @@ Phase 2 — Tool Routing Eval               ✓ done
   HTTP calls mocked — no network required
         │
         ▼
-Phase 3 — Degradation Eval                — todo
+Phase 3 — Degradation Eval                ✓ done
   Worker timeout → partial result, not crash
   Multi-agent graceful degradation
         │
@@ -225,6 +225,61 @@ tool_routing_eval.py
       ▼
   pass/fail per case + exit code 1 on failure
 ```
+
+---
+
+## Phase 3 — Degradation Eval
+
+The multi-agent orchestrator in `02_multi_agent/orchestrator.py` has explicit degradation logic. The eval checks that it behaves correctly under worker failure — returning partial results instead of crashing.
+
+Three degradation paths exist in the code:
+
+```
+CVEResearcher fails    → return "Research failed: {error}"           (early exit)
+SeverityAssessor fails → return "Research findings (assessment       (early exit)
+                          unavailable): {research_result}"
+PatchChecker fails     → synthesis still runs with                   (no early exit)
+                          "Patch information unavailable." in prompt
+```
+
+Workers are mocked with `AsyncMock` — no LLM calls. The orchestrator's imported names are patched directly in its module namespace, because `from workers import ...` creates local references at load time that can't be reached by patching the workers module after the fact.
+
+```
+degradation_cases.json  (4 scenarios)
+      │
+      ▼
+degradation_eval.py
+      │
+      ├── mock groq + dotenv before loading orchestrator
+      ├── patch orchestrator_module.run_cve_researcher = AsyncMock(...)
+      ├── patch orchestrator_module.run_patch_checker  = AsyncMock(...)
+      ├── patch orchestrator_module.run_severity_assessor = AsyncMock(...)
+      │
+      ├── asyncio.run(run_orchestrator("What is Log4Shell?"))
+      ├── assert expected_string in result
+      │
+      ▼
+  pass/fail per scenario + exit code 1 on failure
+```
+
+---
+
+## Phase 3 — Findings
+
+**Result: 4/4 passed**
+
+```
+ID       Scenario              Notes                                          Result
+────────────────────────────────────────────────────────────────────────────────────
+d_001    researcher_fails      CVEResearcher fails → early return             "Research failed: Connection timeout"
+d_002    assessor_fails        SeverityAssessor fails → research only         "Research findings (assessment unavailable): ..."
+d_003    patch_checker_fails   PatchChecker fails → synthesis still runs      "...Patch information unavailable..."
+d_004    all_succeed           All workers pass → final report returned        "Log4Shell is a critical RCE. CVSS 10.0..."
+```
+
+All three degradation paths behave as documented. The most important case is `d_003` — PatchChecker failure has no early return. The orchestrator continues to synthesis and includes `"Patch information unavailable."` in the prompt. The final report is degraded but not broken.
+
+One mocking gotcha found during setup: patching `mock_workers.run_cve_researcher` after module load has no effect. The orchestrator uses `from workers import run_cve_researcher` which binds the name at import time. The fix is to patch `orchestrator_module.run_cve_researcher` directly — replacing the reference in the orchestrator's own namespace.
 
 ---
 
