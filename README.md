@@ -90,50 +90,37 @@ Thresholds should be set to the observed result, not an aspirational target. A t
 
 The same eval pipeline works for any system. Add a new `<system>_eval/` directory and wire it into the shared CI job.
 
-```
-eval_systems/
-│
-├── llm_inference_gateway_eval/     ← System A
-│   ├── data/                       labeled cases
-│   ├── evaluators/                 code-based + LLM-as-judge
-│   ├── evaluator_validation/       judge consistency, calibration, adversarial
-│   ├── red_team/                   adversarial inputs
-│   └── ci/                         run_evals.sh + requirements.txt
-│
-├── synack_agent_prep_eval/         ← System B
-│   ├── data/
-│   ├── evaluators/
-│   ├── evaluator_validation/
-│   ├── red_team/
-│   └── ci/
-│
-├── <next_system>_eval/             ← System C (same structure)
-│   ├── data/
-│   ├── evaluators/
-│   ├── evaluator_validation/
-│   ├── red_team/
-│   └── ci/
-│
-└── .github/workflows/evals.yml     ← one job per system, runs in parallel
+```mermaid
+flowchart TD
+    subgraph pipeline["Eval Pipeline (same for every system)"]
+        D[Deterministic Eval\nrouting · guardrails · dispatch · degradation]
+        D --> J[LLM-as-Judge\nresponse quality]
+        J --> V[Judge Validation\nconsistency · calibration · adversarial]
+        V --> R[Red Team\nencoding · evasion · compound injection]
+        R --> CI[CI\nthresholds · run_evals.sh · GitHub Actions]
+    end
+
+    SA["System A\nllm_inference_gateway"] --> pipeline
+    SB["System B\nsynack-agent-prep"] --> pipeline
+    SC["System C\n(next system)"] --> pipeline
+
+    CI --> GA["GitHub Actions\nParallel jobs — fail fast, independent"]
 ```
 
 Each system eval is self-contained. The GitHub Actions workflow runs them as parallel jobs — a failure in one doesn't block the others. Adding a new system is: copy the structure, write the cases, add a job to the workflow.
 
 ```
-.github/workflows/evals.yml
-
-jobs:
-  llm-gateway-evals:       ← System A job
-    steps: [checkout A, install deps, run ci/run_evals.sh]
-
-  synack-agent-evals:      ← System B job
-    steps: [checkout B, install deps, run ci/run_evals.sh]
-
-  <next-system>-evals:     ← System C job (same pattern)
-    steps: [checkout C, install deps, run ci/run_evals.sh]
+eval_systems/
+├── llm_inference_gateway_eval/   ← System A
+├── synack_agent_prep_eval/       ← System B
+├── <next_system>_eval/           ← System C (same structure)
+│   ├── data/                     labeled cases (hand-written before running)
+│   ├── evaluators/               code-based + LLM-as-judge
+│   ├── evaluator_validation/     consistency, calibration, adversarial
+│   ├── red_team/                 adversarial inputs
+│   └── ci/                       run_evals.sh — exits 0/1, that's the contract
+└── .github/workflows/evals.yml   one parallel job per system
 ```
-
-The shared contract across all systems: `ci/run_evals.sh` exits 0 on pass, 1 on failure. The workflow treats any non-zero exit as a failing check. That's the only interface the CI layer cares about.
 
 ---
 
