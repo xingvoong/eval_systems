@@ -560,3 +560,27 @@ SKIP    quality_eval + judge_validation  (GROQ_API_KEY not set)
 The LLM-judge evals skip gracefully when `GROQ_API_KEY` is absent — the script prints `SKIP` and continues without failing. This keeps CI green in environments without secrets while still running them locally when the key is present.
 
 GitHub Actions runs two parallel jobs: one for `llm_inference_gateway_eval`, one for `synack_agent_prep_eval`. Each job checks out the eval repo and the system under test separately.
+
+---
+
+## Takeaways
+
+**Regex guardrails are not a security boundary.**
+
+The input and output scanners blocked obvious attacks. They failed on everything else — typos, double spaces, newlines, unicode substitutions, leetspeak. Any attacker who can see the pattern can bypass it with a single character change. Deterministic pattern matching works at the happy path. It doesn't hold under adversarial pressure.
+
+**The judge measures accuracy, not fluency — but completeness is noise.**
+
+Accuracy scores correlated 0.93 with human labels. The judge caught wrong CVE IDs, wrong CVSS scores, hallucinated fixes, and fabricated protocols. What it didn't penalize: a bad response that covers all sections incorrectly. Completeness scored high for fluent wrong answers (avg 5/5) and for fluent right answers (avg 5/5). For CVE research, completeness without accuracy is useless. Accuracy is the only dimension that matters.
+
+**Module boundary isolation matters for testing.**
+
+`from workers import run_cve_researcher` binds the name at import time. Patching the workers module after the fact has no effect — the orchestrator already holds a reference. You have to patch `orchestrator_module.run_cve_researcher` directly. This is easy to get wrong and produces a test that passes but doesn't test anything. It's a general problem with Python module boundaries, not specific to this agent.
+
+**Degradation logic needs an explicit contract.**
+
+Three failure paths. Three different behaviors: early exit, partial result, synthesis continues. Each one was deliberate. None of it was documented in the code beyond the behavior itself. The eval surfaced the contract — which failure kills the request, which degrades it, which is invisible to the caller. That's useful to know before the first production timeout.
+
+**Evals are a specification, not just a test suite.**
+
+Phase 1 found a regex gap. Phase 4 found that bad responses outscore mediocre ones. Phase 6 showed the guardrails fail systematically under encoding attacks. None of these were bugs in the conventional sense — the code did exactly what it was written to do. The eval said what the code *should* do and measured the distance. That's the job.
