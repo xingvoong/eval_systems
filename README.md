@@ -73,6 +73,79 @@ Every eval project in this repo follows the same structure:
 
 ---
 
+## What Matters When Evaluating a System
+
+After two projects, the pattern is clear. Every system has the same layers, and each layer needs a different kind of eval.
+
+**1. Deterministic behavior first.**
+
+Routing rules, guardrails, dispatch logic, degradation paths. These have right answers. Write labeled cases, run code-based evals, enforce thresholds in CI. If you can't get 100% on deterministic logic, the probabilistic stuff on top doesn't matter.
+
+**2. LLM behavior second — but validate the judge before trusting it.**
+
+Once you need an LLM to evaluate an LLM, you've added a second model to your error budget. Run consistency checks (zero variance at temperature=0 is the bar), calibrate against human labels (Spearman > 0.85), and probe it with adversarial inputs. A judge that rewards fluency is worse than no judge — it gives you false confidence.
+
+**3. Red team after you know what works.**
+
+Adversarial testing without a baseline is noise. Run the happy path first, document what holds, then systematically attack the boundaries. The goal is to find the failure mode, not to maximize the broke count.
+
+**4. CI locks in the baseline.**
+
+Thresholds should be set to the observed result, not an aspirational target. A threshold you can't currently hit is a broken build, not a goal. What CI actually catches is regression — a future code change that silently breaks something you already verified.
+
+---
+
+## Eval Architecture — Scaling to More Systems
+
+The same eval pipeline works for any system. Add a new `<system>_eval/` directory and wire it into the shared CI job.
+
+```
+eval_systems/
+│
+├── llm_inference_gateway_eval/     ← System A
+│   ├── data/                       labeled cases
+│   ├── evaluators/                 code-based + LLM-as-judge
+│   ├── evaluator_validation/       judge consistency, calibration, adversarial
+│   ├── red_team/                   adversarial inputs
+│   └── ci/                         run_evals.sh + requirements.txt
+│
+├── synack_agent_prep_eval/         ← System B
+│   ├── data/
+│   ├── evaluators/
+│   ├── evaluator_validation/
+│   ├── red_team/
+│   └── ci/
+│
+├── <next_system>_eval/             ← System C (same structure)
+│   ├── data/
+│   ├── evaluators/
+│   ├── evaluator_validation/
+│   ├── red_team/
+│   └── ci/
+│
+└── .github/workflows/evals.yml     ← one job per system, runs in parallel
+```
+
+Each system eval is self-contained. The GitHub Actions workflow runs them as parallel jobs — a failure in one doesn't block the others. Adding a new system is: copy the structure, write the cases, add a job to the workflow.
+
+```
+.github/workflows/evals.yml
+
+jobs:
+  llm-gateway-evals:       ← System A job
+    steps: [checkout A, install deps, run ci/run_evals.sh]
+
+  synack-agent-evals:      ← System B job
+    steps: [checkout B, install deps, run ci/run_evals.sh]
+
+  <next-system>-evals:     ← System C job (same pattern)
+    steps: [checkout C, install deps, run ci/run_evals.sh]
+```
+
+The shared contract across all systems: `ci/run_evals.sh` exits 0 on pass, 1 on failure. The workflow treats any non-zero exit as a failing check. That's the only interface the CI layer cares about.
+
+---
+
 ## Course → AIUC Mapping
 
 | Course Topic | AIUC-1 Domain |
