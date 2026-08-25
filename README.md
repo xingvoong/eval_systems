@@ -2,22 +2,13 @@
 
 A collection of eval projects for AI systems I've built. Each project evaluates a different system end to end — routing correctness, response quality, adversarial robustness.
 
-Built alongside the [AI Evals For Engineers & PMs](https://maven.com/parlance-labs/evals) course, with a focus on interview prep for [AIUC](https://aiuc.com) — an AI agent certification and insurance company.
+Built alongside the [AI Evals For Engineers & PMs](https://maven.com/parlance-labs/evals) course.
 
 ---
 
 ## Why Evals
 
-AIUC certifies AI agents against their AIUC-1 standard. Their product *is* an eval system. Every project here maps to one or more of the six AIUC-1 domains:
-
-| AIUC-1 Domain | What It Checks |
-|---|---|
-| Reliability | Does the system behave consistently? |
-| Accountability | Can you trace why a decision was made? |
-| Security | Prompt injection, adversarial inputs, boundary attacks |
-| Safety | Does the system refuse harmful outputs? |
-| Data & Privacy | How does it handle sensitive inputs? |
-| Societal Risks | Bias, misuse potential |
+AI systems fail quietly. A routing rule silently mismatches. A guardrail passes obvious attacks and breaks on a single character substitution. An LLM judge rewards fluency instead of accuracy. None of these show up in unit tests. You find them by building an eval.
 
 ---
 
@@ -143,19 +134,6 @@ jobs:
 ```
 
 The shared contract across all systems: `ci/run_evals.sh` exits 0 on pass, 1 on failure. The workflow treats any non-zero exit as a failing check. That's the only interface the CI layer cares about.
-
----
-
-## Course → AIUC Mapping
-
-| Course Topic | AIUC-1 Domain |
-|---|---|
-| Agent instrumentation & tracing | Accountability |
-| Error analysis & failure modes | Reliability |
-| LLM-as-judge evaluators | How AIUC-1 audits work |
-| Evaluator validation | Certification credibility |
-| Safety red-teaming | Security + Safety |
-| CI/CD integration | Continuous certification |
 
 ---
 
