@@ -1,0 +1,4 @@
+# Dependencies for running synack_agent_prep evals in CI
+scipy
+requests
+groq

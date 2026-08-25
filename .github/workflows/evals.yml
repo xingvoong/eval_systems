@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-evals:
+  llm-gateway-evals:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,4 +46,44 @@ jobs:
         working-directory: eval_systems/llm_inference_gateway_eval
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: bash ci/run_evals.sh
+
+  synack-agent-evals:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout eval_systems
+        uses: actions/checkout@v4
+        with:
+          path: eval_systems
+
+      - name: Checkout synack-agent-prep
+        uses: actions/checkout@v4
+        with:
+          repository: xingvoong/synack-agent-prep
+          path: synack-agent-prep
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-synack-${{ hashFiles('eval_systems/synack_agent_prep_eval/ci/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-synack-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r eval_systems/synack_agent_prep_eval/ci/requirements.txt
+          pip install -r synack-agent-prep/requirements.txt
+
+      - name: Run eval suite
+        working-directory: eval_systems/synack_agent_prep_eval
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: bash ci/run_evals.sh

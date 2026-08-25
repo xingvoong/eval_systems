@@ -26,7 +26,7 @@ AIUC certifies AI agents against their AIUC-1 standard. Their product *is* an ev
 | Project | What It Is | Status |
 |---|---|---|
 | [llm_inference_gateway](./llm_inference_gateway_eval/) | FastAPI service that routes prompts to LLM providers | Complete (8/8 phases) |
-| [synack-agent-prep](./synack_agent_prep_eval/) | Multi-module CVE research agent with guardrails and multi-agent orchestration | In progress (5/7 phases) |
+| [synack-agent-prep](./synack_agent_prep_eval/) | Multi-module CVE research agent with guardrails and multi-agent orchestration | Complete (7/7 phases) |
 
 ### synack-agent-prep — Phase Progress
 
@@ -37,8 +37,8 @@ AIUC certifies AI agents against their AIUC-1 standard. Their product *is* an ev
 | 3 — Degradation Eval | Worker timeout → partial result, not crash | 4/4 |
 | 4 — Response Quality | LLM-as-judge: CVE answers accurate and grounded? | good 5.0, bad 3.6, mediocre 1.5 |
 | 5 — Judge Validation | Consistency, calibration, adversarial | 0.86 Spearman, 1/5 fooled |
-| 6 — Red Team | Injection bypass attempts | — |
-| 7 — CI | run_evals.sh + GitHub Actions | — |
+| 6 — Red Team | Injection bypass attempts | Input 5/13, output 1/4 — encoding/evasion bypasses documented |
+| 7 — CI | run_evals.sh + GitHub Actions | 5/5 PASS, 1 SKIP (no API key in CI) |
 
 ---
 
