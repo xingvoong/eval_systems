@@ -102,7 +102,7 @@ Phase 4 — Response Quality                ✓ done
   LLM-as-judge: CVE answers accurate and grounded?
         │
         ▼
-Phase 5 — Validate the Judge              — todo
+Phase 5 — Validate the Judge              ✓ done
   Consistency, calibration, adversarial
         │
         ▼
@@ -370,3 +370,95 @@ The mediocre responses are vague and padded — they score 1 on accuracy because
 A well-structured bad answer scores the same completeness as a good answer. Completeness measures whether the response *addresses* the question, not whether it's *correct*. For CVE research, accuracy is the only dimension that matters for safety.
 
 This signals that Phase 5 (judge validation) needs to probe whether the judge is measuring accuracy reliably or rewarding fluency.
+
+---
+
+## Phase 5 — Validate the Judge
+
+A judge is a model with its own failure modes. Three things to test:
+
+```
+Consistency   Same input → same score every time?
+              If not, scores are noise, not signal.
+
+Calibration   Does the judge agree with human labels?
+              Spearman correlation < 0.70 means it's measuring something else.
+
+Adversarial   Can a bad response fool it?
+              Fluent-but-wrong, verbose padding, confident hallucination.
+              If yes, the judge measures surface quality — not actual quality.
+```
+
+All three scripts use `openai/gpt-oss-20b` via Groq at temperature=0 — same judge as Phase 4.
+
+---
+
+## Phase 5 — Findings
+
+### Consistency — `judge_consistency.py`
+
+Same input through the judge 5x. Score variance should be zero.
+
+```
+ID       Level      Accuracy scores     Var    Complete scores     Var    Concise scores      Var    Stable?
+q_001    good       [5, 5, 5, 5, 5]    0.00   [5, 5, 5, 5, 5]    0.00   [5, 5, 5, 5, 5]    0.00   ✓
+q_002    bad        [1, 1, 1, 1, 1]    0.00   [5, 5, 5, 5, 5]    0.00   [5, 5, 5, 5, 5]    0.00   ✓
+q_006    mediocre   [1, 1, 1, 1, 1]    0.00   [2, 2, 2, 2, 2]    0.00   [3, 3, 3, 3, 3]    0.00   ✓
+
+Unstable cases: 0/3 — judge is fully consistent at temperature=0
+```
+
+---
+
+### Calibration — `judge_calibration.py`
+
+Human labels written before running the judge. Spearman rank correlation measures agreement.
+
+```
+Dimension      Correlation    Interpretation
+─────────      ───────────    ──────────────
+accuracy       0.93           strong ✓
+completeness   0.82           acceptable
+conciseness    0.82           acceptable
+
+Average: 0.86 — strong ✓
+```
+
+Disagreements on completeness: the judge scores bad responses (fluent, structured) as 5/5 complete while human scores them 3/5. The judge sees a response that addresses all sections; humans see a response that addresses all sections *incorrectly*. For CVE research, completeness and accuracy are entangled — a complete wrong answer is worse than an incomplete right answer.
+
+---
+
+### Adversarial — `adversarial_judge.py`
+
+5 CVE responses designed to fool the judge.
+
+```
+ID       Type                    Accuracy   Complete   Concise   Avg    Fooled?
+adv_001  fluent_but_wrong           1          5          5       3.7    caught ✓
+adv_002  verbose_padding            1          1          1       1.0    caught ✓
+adv_003  confident_hallucination    1          5          2       2.7    caught ✓
+adv_004  correct_id_wrong_facts     1          5          5       3.7    caught ✓
+adv_005  overformatted              4          3          4       3.7    FOOLED ✗
+
+Judge fooled: 1/5
+```
+
+`adv_005` — correct Log4Shell facts (CVE ID, CVSS 10.0, correct fix) wrapped in markdown headers, tables, and blockquotes. The judge scored conciseness=4 when the expected max was 2. Over-formatting is the one attack that partially works — the content is correct so accuracy stays high, but the judge is lenient on padding when the facts underneath are right.
+
+`adv_002` is the most important catch — 170 words, zero verifiable facts, no CVE ID, no CVSS, no fix version. Scored 1/1/1. The judge didn't reward verbosity when there was nothing to reward.
+
+`adv_003` (confident hallucination) scored accuracy=1 despite an authoritative tone. Wrong CVE ID, wrong protocol, wrong CVSS, wrong fix — the judge caught every error.
+
+---
+
+### Phase 5 Summary
+
+```
+Test           Result
+─────────────  ──────────────────────────────────────────────
+Consistency    0/3 unstable — zero variance at temperature=0
+Calibration    0.86 avg Spearman correlation vs human
+Adversarial    1/5 fooled — over-formatting gets partial pass
+```
+
+The judge is trustworthy on accuracy. Scores from Phase 4 can be used for relative comparison. The one weakness: it's lenient on over-formatted responses when the underlying facts are correct — conciseness scores should be treated as approximate.
