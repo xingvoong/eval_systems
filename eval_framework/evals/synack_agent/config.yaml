@@ -1,0 +1,10 @@
+system: synack_agent
+phases:
+  - name: guardrail
+    type: guardrail
+    cases: cases/guardrail_cases.json
+    threshold: 19
+  - name: quality
+    type: judge
+    cases: cases/quality_cases.json
+    judge_model: openai/gpt-oss-20b

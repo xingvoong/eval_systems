@@ -1,0 +1,10 @@
+system: llm_gateway
+phases:
+  - name: routing
+    type: deterministic
+    cases: cases/routing_cases.json
+    threshold: 15
+  - name: quality
+    type: judge
+    cases: cases/quality_cases.json
+    judge_model: openai/gpt-oss-20b

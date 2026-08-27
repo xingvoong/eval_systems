@@ -1,0 +1,107 @@
+[
+  {
+    "id": "q_001",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "reference_response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"]
+  },
+  {
+    "id": "q_002",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "To reverse a linked list, you need to go through each node and change where it points. You start from the beginning and work your way to the end, making each node point backwards instead of forwards. This is a common interview question and involves pointer manipulation. The time complexity is O(n) and space complexity is O(1).",
+    "reference_response": "def reverse_linked_list(head):\n    prev = None\n    current = head\n    while current:\n        next_node = current.next\n        current.next = prev\n        prev = current\n        current = next_node\n    return prev",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"],
+    "notes": "Explains the concept but provides no code. Fails the task."
+  },
+  {
+    "id": "q_003",
+    "prompt": "What is the capital of Japan?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "Tokyo.",
+    "reference_response": "Tokyo.",
+    "quality_dimensions": ["correctness", "conciseness"]
+  },
+  {
+    "id": "q_004",
+    "prompt": "What is the capital of Japan?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "Japan is a fascinating island nation located in East Asia. It has a rich cultural history spanning thousands of years, with influences from China and Korea. The country is known for its technology, cuisine, and traditional arts. Japan consists of four main islands and thousands of smaller ones. The country has a constitutional monarchy with an emperor. Its major cities include Osaka, Kyoto, and of course its capital, which is a major global financial center.",
+    "reference_response": "Tokyo.",
+    "quality_dimensions": ["correctness", "conciseness"],
+    "notes": "Correct answer buried at the end after massive padding. Fluent but wasteful."
+  },
+  {
+    "id": "q_005",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "• The article discusses three main themes: economic impact, social change, and policy response.\n• Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n• Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "reference_response": "• The article discusses three main themes: economic impact, social change, and policy response.\n• Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n• Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"]
+  },
+  {
+    "id": "q_006",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "mediocre",
+    "response": "Here are the key points:\n• The article talks about some important topics that are relevant to current events and society.\n• There are several findings mentioned that could have implications for various stakeholders.\n• The author concludes with some recommendations that readers might find useful.",
+    "reference_response": "• The article discusses three main themes: economic impact, social change, and policy response.\n• Key finding: unemployment rose 3% in Q3, driven primarily by manufacturing sector decline.\n• Policy recommendation: targeted retraining programs proposed for affected workers.",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"],
+    "notes": "Follows the format but contains zero information. Confident-sounding but completely hollow."
+  },
+  {
+    "id": "q_007",
+    "prompt": "What is the difference between TCP and UDP?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "TCP (Transmission Control Protocol) is connection-oriented — it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless — it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "reference_response": "TCP (Transmission Control Protocol) is connection-oriented — it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless — it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"]
+  },
+  {
+    "id": "q_008",
+    "prompt": "What is the difference between TCP and UDP?",
+    "routed_to": "gpt-4",
+    "routing_reason": "learned_router",
+    "quality_level": "bad",
+    "response": "TCP and UDP are both network protocols. TCP is more reliable while UDP is faster. They are used in different situations depending on what you need. TCP makes sure all the data gets there and UDP doesn't check. Both are important in networking.",
+    "reference_response": "TCP (Transmission Control Protocol) is connection-oriented — it establishes a handshake before sending data and guarantees delivery and ordering. Use it when accuracy matters (HTTP, email, file transfers).\n\nUDP (User Datagram Protocol) is connectionless — it sends packets without confirming receipt. Faster but no delivery guarantee. Use it when speed matters more than accuracy (video streaming, gaming, DNS).",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"],
+    "notes": "Vague and adds no concrete information. Sounds correct but explains nothing."
+  },
+  {
+    "id": "q_009",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "good",
+    "response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "reference_response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"]
+  },
+  {
+    "id": "q_010",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "routed_to": "mistralai/Mistral-7B-Instruct-v0.3",
+    "routing_reason": "learned_router",
+    "quality_level": "mediocre",
+    "response": "You can use cron to schedule a backup script. Here is an example:\n\n```\ncp -r /source /backup\n```\n\nYou would need to add this to your crontab file. Crontab allows you to schedule commands to run automatically. The backup will copy your files to another location.",
+    "reference_response": "#!/bin/bash\nSOURCE_DIR=\"/path/to/source\"\nBACKUP_DIR=\"/path/to/backup\"\nDATE=$(date +%Y-%m-%d)\n\nrsync -av --delete \"$SOURCE_DIR\" \"$BACKUP_DIR/backup-$DATE\"\n\n# Add to crontab:\n# 0 2 * * * /path/to/backup.sh",
+    "quality_dimensions": ["correctness", "completeness", "conciseness"],
+    "notes": "Has a script but it's incomplete — no date stamping, no crontab syntax, uses cp instead of rsync."
+  }
+]

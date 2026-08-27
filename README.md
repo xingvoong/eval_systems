@@ -124,6 +124,36 @@ eval_systems/
 
 ---
 
+## Next — Eval Framework
+
+The current setup works but doesn't scale cleanly. Every new system duplicates the same runner logic, judge setup, and CI boilerplate. The next step is a shared framework: one adapter interface, one judge, one red team library — systems plug in, the framework does the rest.
+
+```mermaid
+flowchart LR
+    subgraph framework["eval_framework (shared)"]
+        R[Runner]
+        J[LLM Judge]
+        V[Judge Validation]
+        RT[Red Team Library]
+        CI[CI + Report]
+        R --> J --> V --> RT --> CI
+    end
+
+    subgraph systems["Systems (plug in)"]
+        A[SystemAdapter\n.call\n.validate_input]
+        Cases[Case Files\nJSON]
+        Config[config.yaml\nthresholds · judge model]
+    end
+
+    A --> R
+    Cases --> R
+    Config --> CI
+```
+
+Write a 20-line adapter. Drop in case files. Run the framework.
+
+---
+
 ## Takeaways
 
 **Hand-write your test cases before you run anything.**

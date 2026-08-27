@@ -1,0 +1,122 @@
+[
+  {
+    "id": "r_001",
+    "prompt": "What is the capital of Japan?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Phase 1 tested the zero-shot classifier directly — it mislabeled this as summarization. The actual system uses the learned router, which routes correctly to gpt-4."
+  },
+  {
+    "id": "r_002",
+    "prompt": "When did World War II end?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as summarization. Learned router routes correctly to gpt-4."
+  },
+  {
+    "id": "r_003",
+    "prompt": "What is the difference between TCP and UDP?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as code generation. Learned router routes correctly to gpt-4."
+  },
+  {
+    "id": "r_004",
+    "prompt": "Hey, how are you doing today?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier never predicted general chat. Learned router routes correctly to gpt-4."
+  },
+  {
+    "id": "r_005",
+    "prompt": "I'm feeling a bit overwhelmed with work lately.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as summarization → Mistral-7B. Learned router fixes this and routes to gpt-4."
+  },
+  {
+    "id": "r_006",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as summarization. Learned router routes correctly to Mistral-7B."
+  },
+  {
+    "id": "r_007",
+    "prompt": "Give me a bash script that backs up a directory every night.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as summarization (0.68 confidence). Learned router routes correctly to Mistral-7B."
+  },
+  {
+    "id": "r_008",
+    "prompt": "Summarize the key points from this article in 3 bullets.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier was correct here (1.00 confidence). Learned router also routes correctly to Mistral-7B."
+  },
+  {
+    "id": "r_009",
+    "prompt": "TL;DR this paragraph for me.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier was correct here (0.98 confidence). Learned router also routes correctly to Mistral-7B."
+  },
+  {
+    "id": "r_010",
+    "prompt": "Write a Python function to reverse a linked list.",
+    "request_metadata": { "priority": "high", "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "priority==high",
+    "notes": "Rule 1 test. priority=high bypasses everything. Always gpt-4."
+  },
+  {
+    "id": "r_011",
+    "prompt": "What is the capital of Japan?",
+    "request_metadata": { "priority": null, "max_cost": 0.005 },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "max_cost<0.01",
+    "notes": "Rule 2 test. max_cost=0.005 fires before learned router. Always Mistral-7B."
+  },
+  {
+    "id": "r_012",
+    "prompt": "What is the capital of Japan?",
+    "request_metadata": { "priority": "high", "max_cost": 0.005 },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "priority==high",
+    "notes": "Rule 1 vs Rule 2 conflict. Both rules apply. Rule 1 wins — priority overrides budget."
+  },
+  {
+    "id": "r_013",
+    "prompt": "What does HTTP stand for?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as code generation. Learned router routes correctly to gpt-4."
+  },
+  {
+    "id": "r_014",
+    "prompt": "Summarize this code and tell me if it has bugs.",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "mistralai/Mistral-7B-Instruct-v0.3",
+    "expected_routing_reason": "learned_router",
+    "notes": "Ambiguous case. Learned router picks Mistral-7B. Debatable — the bug detection part might benefit from gpt-4. Flagged for review."
+  },
+  {
+    "id": "r_015",
+    "prompt": "What do you think about AI taking over jobs?",
+    "request_metadata": { "priority": null, "max_cost": null },
+    "expected_model": "gpt-4",
+    "expected_routing_reason": "learned_router",
+    "notes": "Zero-shot classifier mislabeled as question answering but routed to gpt-4 by accident. Learned router also routes to gpt-4 — correct result, now for the right reason."
+  }
+]
