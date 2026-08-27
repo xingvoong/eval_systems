@@ -12,6 +12,23 @@ Three evaluation phases, escalating in cost and complexity:
 
 You define which phases to run and at what threshold in a YAML config. The framework handles the rest.
 
+```mermaid
+flowchart TD
+    CLI["python -m eval_framework\n--system my_system"]
+    CLI --> Discovery["Auto-discover adapter\nsystems/my_system.py"]
+    Discovery --> Config["Load config\nevals/my_system/config.yaml"]
+
+    Config --> P1["Deterministic phase\ncheck expected string in output"]
+    Config --> P2["Guardrail phase\nvalidate_input / scan_output"]
+    Config --> P3["Judge phase\nLLM scores accuracy · completeness · conciseness"]
+
+    P1 --> Report
+    P2 --> Report
+    P3 --> Report
+
+    Report["Report\npass/fail per phase · exit 0 or 1"]
+```
+
 ## Adding a new system
 
 Three steps. No core code changes.
