@@ -234,7 +234,7 @@ def run_phase(phase_cfg: dict, adapter, cases_dir: Path, report: Report) -> None
     elif ptype == "judge":
         import os
         if not os.environ.get("GROQ_API_KEY"):
-            print(f"\nSkipping judge phase '{name}' — GROQ_API_KEY not set\n")
+            print(f"\nSkipping judge phase '{name}' — GROQ_API_KEY not set. Set it to run LLM-as-judge scoring.\n")
             return
         judge_model = phase_cfg.get("judge_model", "openai/gpt-oss-20b")
         run_judge_phase(adapter, cases, name, judge_model, report)
