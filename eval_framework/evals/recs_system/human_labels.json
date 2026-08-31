@@ -1,0 +1,5 @@
+[
+  {"id": "q_001", "score": 5, "notes": "Diverse genres, high scores, good quality list"},
+  {"id": "q_002", "score": 1, "notes": "No diversity — all action, fails genre requirement"},
+  {"id": "q_003", "score": 5, "notes": "Correct reranking output with filter, freshness, diversity"}
+]

@@ -149,6 +149,9 @@ python -m eval_framework --system my_system --baseline
 # Print pass rate trends from run history
 python -m eval_framework --system my_system --history
 
+# Run judge consistency and calibration checks
+python -m eval_framework --system my_system --validate-judge
+
 # List available systems
 python -m eval_framework --help
 
@@ -258,5 +261,11 @@ Shipped:
 - Every run automatically appends results to `evals/{system}/run_log.json` — timestamp, passed, total, threshold per phase
 - `--history` flag prints a trend table: avg pass rate, min, max, and direction arrow (↑ ↓ →) across the last 10 runs
 
-### Phase 5 — Judge robustness
+### Phase 5 — Judge robustness ✓
 The LLM judge is the least reliable part of the pipeline. Measure consistency and calibration systematically. Add support for multiple judge models and ensemble scoring. Establish human-label baselines for each system.
+
+Shipped:
+- Ensemble scoring — pass a list of models to `LLMJudge`, scores are averaged across all of them
+- `--validate-judge` flag — runs consistency checks (3 runs per case, reports max score variance) and Spearman calibration against human labels
+- `human_labels.json` per system — numeric ground truth scores for calibration
+- Skips gracefully when `GROQ_API_KEY` is not set

@@ -314,6 +314,58 @@ def print_history(log_path: Path, last_n: int = 10) -> None:
     print(f"Last run:  {recent[-1]['timestamp'][:19].replace('T', ' ')}\n")
 
 
+def run_judge_validation(system: str, config: dict, cases_dir: Path) -> None:
+    """Run consistency and calibration checks on the LLM judge."""
+    import os
+    from eval_framework.judge import LLMJudge
+
+    if not os.environ.get("GROQ_API_KEY"):
+        print("Skipping judge validation — GROQ_API_KEY not set. Set it to run LLM-as-judge scoring.")
+        return
+
+    judge_phases = [p for p in config["phases"] if p["type"] == "judge"]
+    if not judge_phases:
+        print(f"No judge phases configured for {system}.")
+        return
+
+    for phase_cfg in judge_phases:
+        cases_path = cases_dir / phase_cfg["cases"]
+        cases = load_cases_from_json(cases_path, "judge")
+        judge_model = phase_cfg.get("judge_model", "openai/gpt-oss-20b")
+        judge = LLMJudge(model=judge_model)
+
+        print(f"\nJudge validation — {system} — {phase_cfg['name']} — model: {judge_model}\n")
+
+        # Consistency: run each case 3 times, report max variance
+        print("Consistency (3 runs per case — lower variance = more reliable):\n")
+        print(f"{'ID':<10} {'Max variance':<15} Signal")
+        print(f"{'─'*45}")
+        for case in cases:
+            variance = judge.validate_consistency(case, n=3)
+            signal = "✓ stable" if variance < 0.5 else ("~ unstable" if variance < 1.5 else "✗ flaky")
+            print(f"{case.id:<10} {variance:<15.3f} {signal}")
+
+        # Calibration: compare judge scores against quality_level labels
+        human_labels_path = cases_dir / "human_labels.json"
+        if human_labels_path.exists():
+            with open(human_labels_path) as f:
+                human_labels_raw = json.load(f)
+            # map case id -> numeric score
+            label_map = {entry["id"]: entry["score"] for entry in human_labels_raw}
+            filtered_cases = [c for c in cases if c.id in label_map]
+            human_scores = [label_map[c.id] for c in filtered_cases]
+
+            if filtered_cases:
+                print(f"\nCalibration (Spearman correlation vs human labels):\n")
+                correlations = judge.validate_calibration(filtered_cases, human_scores)
+                print(f"{'Dimension':<15} {'Spearman r':<12} p-value")
+                print(f"{'─'*35}")
+                for dim, stats in correlations.items():
+                    print(f"{dim:<15} {stats['spearman_r']:<12} {stats['p_value']}")
+        else:
+            print(f"\nNo human_labels.json found at {human_labels_path} — skipping calibration.")
+
+
 def main() -> int:
     available = sorted(p.stem for p in SYSTEMS_DIR.glob("*.py") if not p.stem.startswith("_"))
     parser = argparse.ArgumentParser(description="Pluggable eval runner")
@@ -326,6 +378,8 @@ def main() -> int:
                         help="Compare this run against the saved baseline — fail if any phase regressed")
     parser.add_argument("--history", action="store_true",
                         help="Print pass rate trends from the run log instead of running evals")
+    parser.add_argument("--validate-judge", action="store_true",
+                        help="Run consistency and calibration checks on the judge using quality cases")
     args = parser.parse_args()
 
     config_path = EVALS_DIR / args.system / "config.yaml"
@@ -340,6 +394,10 @@ def main() -> int:
 
     if args.history:
         print_history(EVALS_DIR / args.system / "run_log.json")
+        return 0
+
+    if args.validate_judge:
+        run_judge_validation(args.system, config, cases_dir)
         return 0
 
     adapter = load_adapter(args.system)

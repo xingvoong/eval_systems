@@ -28,22 +28,23 @@ Score the candidate response."""
 
 
 class LLMJudge:
-    def __init__(self, model: str = "openai/gpt-oss-20b", api_key: str | None = None):
+    def __init__(self, model: str | list[str] = "openai/gpt-oss-20b", api_key: str | None = None):
         from groq import Groq
-        self.model = model
+        self.models = [model] if isinstance(model, str) else model
+        self.model = self.models[0]  # primary model for single-model paths
         key = api_key or os.environ.get("GROQ_API_KEY")
         if not key:
             raise ValueError("GROQ_API_KEY not set and no api_key passed")
         self.client = Groq(api_key=key)
 
-    def score(self, prompt: str, reference: str, candidate: str) -> dict:
+    def _score_single(self, model: str, prompt: str, reference: str, candidate: str) -> dict:
         user_msg = JUDGE_USER_TEMPLATE.format(
             prompt=prompt,
             reference=reference,
             candidate=candidate,
         )
         response = self.client.chat.completions.create(
-            model=self.model,
+            model=model,
             temperature=0,
             messages=[
                 {"role": "system", "content": JUDGE_SYSTEM},
@@ -60,6 +61,21 @@ class LLMJudge:
             raw = raw.strip()
 
         return json.loads(raw)
+
+    def score(self, prompt: str, reference: str, candidate: str) -> dict:
+        """Score a candidate. If multiple models configured, returns ensemble average."""
+        if len(self.models) == 1:
+            return self._score_single(self.models[0], prompt, reference, candidate)
+
+        all_scores = [self._score_single(m, prompt, reference, candidate) for m in self.models]
+        dims = ["accuracy", "completeness", "conciseness"]
+        averaged = {}
+        for dim in dims:
+            values = [s[dim] for s in all_scores if dim in s]
+            averaged[dim] = round(sum(values) / len(values), 2) if values else 0
+        averaged["reasoning"] = f"[ensemble/{len(self.models)} models] " + all_scores[0].get("reasoning", "")
+        averaged["models"] = self.models
+        return averaged
 
     def validate_consistency(self, case: EvalCase, n: int = 5) -> float:
         """Run same case n times, return max variance across dimensions."""

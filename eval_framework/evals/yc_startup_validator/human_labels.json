@@ -1,0 +1,5 @@
+[
+  {"id": "q_001", "score": 5, "notes": "Strong is correct for HR/payroll/SMB — matches YC pattern"},
+  {"id": "q_002", "score": 5, "notes": "Low is correct for consumer social pet app"},
+  {"id": "q_003", "score": 1, "notes": "Strong is wrong for NFT game — should be low"}
+]
