@@ -146,6 +146,9 @@ python -m eval_framework --system my_system --save-baseline
 # Compare current run against saved baseline — exit 1 if any phase regressed
 python -m eval_framework --system my_system --baseline
 
+# Print pass rate trends from run history
+python -m eval_framework --system my_system --history
+
 # List available systems
 python -m eval_framework --help
 
@@ -248,8 +251,12 @@ Shipped:
 - Generalized `deterministic` phase type using `adapter.call()` — split out `routing` as its own type for llm_gateway
 - Probed model scores before writing cases to ensure expected labels match actual model behavior
 
-### Phase 4 — Eval observability
+### Phase 4 — Eval observability ✓
 Track pass rates over time. Surface trends — which cases are flaky, which thresholds are too loose, where judge scores are drifting. Start with a simple JSON log per run. Build dashboards later if the data proves useful.
+
+Shipped:
+- Every run automatically appends results to `evals/{system}/run_log.json` — timestamp, passed, total, threshold per phase
+- `--history` flag prints a trend table: avg pass rate, min, max, and direction arrow (↑ ↓ →) across the last 10 runs
 
 ### Phase 5 — Judge robustness
 The LLM judge is the least reliable part of the pipeline. Measure consistency and calibration systematically. Add support for multiple judge models and ensemble scoring. Establish human-label baselines for each system.
