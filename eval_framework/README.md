@@ -220,8 +220,23 @@ Requires Python 3.11+.
 ### Phase 1 — Core framework ✓
 Build the adapter interface and three eval phases. Prove the pattern works on two real systems. Ship auto-discovery so new systems require zero core changes.
 
+Shipped:
+- `BaseSystemAdapter` interface — `call()` required, `validate_input()` / `scan_output()` optional
+- Three eval phase types: deterministic, guardrail, LLM-as-judge
+- Auto-discovery: drop a file in `systems/`, it's immediately available — no registration
+- YAML config per system defining which phases to run and at what threshold
+- Adapters for `llm_gateway` (routing via direct import) and `synack_agent` (guardrail via direct import)
+- Exit code 0/1 — CI-friendly out of the box
+
 ### Phase 2 — CI integration ✓
 Wire eval runs into CI. Fail the build when pass rates drop below threshold. Add a `--baseline` flag to compare current run against a stored reference — catch regressions, not just absolute failures.
+
+Shipped:
+- `--save-baseline` — writes `evals/{system}/baseline.json` after a known-good run
+- `--baseline` — compares current run against saved baseline, exits 1 if any phase regressed
+- Regression report showing baseline vs current per phase with delta
+- Judge phases skip gracefully when `GROQ_API_KEY` is not set
+- `eval-framework` GitHub Actions job — checks out all sibling repos, installs deps, runs both systems with `--baseline`
 
 ### Phase 3 — More systems
 Expand coverage beyond `llm_gateway` and `synack_agent`. Each new system is three files: an adapter, a config, and case data. Target: five systems covering routing, agents, and RAG pipelines.
