@@ -87,3 +87,57 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: bash ci/run_evals.sh
+
+  eval-framework:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout eval_systems
+        uses: actions/checkout@v4
+        with:
+          path: eval_systems
+
+      - name: Checkout llm_inference_gateway
+        uses: actions/checkout@v4
+        with:
+          repository: xingvoong/llm_inference_gateway
+          path: llm_inference_gateway
+
+      - name: Checkout synack-agent-prep
+        uses: actions/checkout@v4
+        with:
+          repository: xingvoong/synack-agent-prep
+          path: synack-agent-prep
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-framework-${{ hashFiles('eval_systems/eval_framework/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-framework-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e eval_systems/eval_framework/
+          pip install -r eval_systems/llm_inference_gateway_eval/ci/requirements.txt
+          pip install -r eval_systems/synack_agent_prep_eval/ci/requirements.txt
+          pip install -r synack-agent-prep/requirements.txt
+
+      - name: Run llm_gateway evals
+        working-directory: eval_systems
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m eval_framework --system llm_gateway --baseline
+
+      - name: Run synack_agent evals
+        working-directory: eval_systems
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python -m eval_framework --system synack_agent --baseline

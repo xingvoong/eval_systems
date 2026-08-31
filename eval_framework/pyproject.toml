@@ -3,3 +3,7 @@ name = "eval_framework"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = ["groq", "scipy", "pyyaml"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["eval_framework*"]

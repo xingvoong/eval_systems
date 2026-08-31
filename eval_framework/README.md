@@ -140,11 +140,43 @@ python -m eval_framework --system my_system
 # Run a single phase
 python -m eval_framework --system my_system --phase guardrail
 
+# Save current results as the baseline for regression checks
+python -m eval_framework --system my_system --save-baseline
+
+# Compare current run against saved baseline — exit 1 if any phase regressed
+python -m eval_framework --system my_system --baseline
+
 # List available systems
 python -m eval_framework --help
 
 # Exit code: 0 if all thresholds met, 1 if any failed — CI-friendly
 ```
+
+## Baseline and regression detection
+
+Run with `--save-baseline` after a known-good run to write `evals/{system}/baseline.json`. From then on, `--baseline` compares the current run against it:
+
+```
+────────────────────────────────────────────────────────────
+Phase                Baseline     Current      Status
+────────────────────────────────────────────────────────────
+routing              15           14           ✗ REGRESSED (-1)
+guardrail            19           19           ✓ no change
+────────────────────────────────────────────────────────────
+
+REGRESSION DETECTED in: routing
+```
+
+Exit code is 1 if any phase regressed — CI fails. Judge phases are skipped automatically when `GROQ_API_KEY` is not set.
+
+## CI
+
+GitHub Actions workflow at `.github/workflows/evals.yml` runs both systems on every push and PR to `main`. The `eval-framework` job:
+
+1. Checks out `eval_systems`, `llm_inference_gateway`, and `synack-agent-prep` as siblings (matching the local layout adapters expect).
+2. Installs the framework and system dependencies.
+3. Runs `python -m eval_framework --system llm_gateway --baseline` and `--system synack_agent --baseline`.
+4. Fails the build if any phase regresses below the saved baseline.
 
 ## Red team cases
 
@@ -188,7 +220,7 @@ Requires Python 3.11+.
 ### Phase 1 — Core framework ✓
 Build the adapter interface and three eval phases. Prove the pattern works on two real systems. Ship auto-discovery so new systems require zero core changes.
 
-### Phase 2 — CI integration
+### Phase 2 — CI integration ✓
 Wire eval runs into CI. Fail the build when pass rates drop below threshold. Add a `--baseline` flag to compare current run against a stored reference — catch regressions, not just absolute failures.
 
 ### Phase 3 — More systems
