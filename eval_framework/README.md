@@ -269,3 +269,23 @@ Shipped:
 - `--validate-judge` flag — runs consistency checks (3 runs per case, reports max score variance) and Spearman calibration against human labels
 - `human_labels.json` per system — numeric ground truth scores for calibration
 - Skips gracefully when `GROQ_API_KEY` is not set
+
+---
+
+## Wrap-up
+
+Five phases. Five systems. One pattern that holds across all of them.
+
+The core insight is that eval structure matters more than eval cleverness. A deterministic phase with 10 labeled cases catches more real bugs than a sophisticated judge with no baseline. Start with what has a right answer. Layer in probabilistic evaluation only after the deterministic layer is solid.
+
+A few things that held up across every system:
+
+**Auto-discovery earns its keep.** The adapter pattern means adding a system is three files — no changes to core code. That's not just ergonomics. It's the difference between eval coverage that grows with the project and eval coverage that stalls because adding a system is friction.
+
+**Baselines are the point of CI.** Thresholds without a baseline just tell you if today's run passes. Baselines tell you if something got worse. Regression detection is the actual value — not the pass/fail gate itself.
+
+**The judge needs a judge.** An LLM evaluating an LLM is two models in your error budget. Consistency checks and Spearman calibration against human labels aren't optional hygiene — they're how you know whether to trust the scores. A judge that agrees with humans 0.85 Spearman is useful. A judge you haven't validated is noise with a confidence score attached.
+
+**Direct import beats HTTP for test speed.** Every adapter in this framework calls the system's code directly — no server, no network, no auth. That keeps the eval loop fast enough to run in CI without special infrastructure. The tradeoff is coupling to the source repo. For most systems, that's the right call.
+
+The framework is complete but not finished. Run logs exist but nothing reads them automatically. The judge is calibrated but only against hand-written labels for three systems. The CI job checks out sibling repos but doesn't handle the case where a system isn't checked out. Each of these is a real gap — but they're the kind of gap you find by using the system, not by planning it.
