@@ -124,9 +124,9 @@ eval_systems/
 
 ---
 
-## Next — Eval Framework
+## eval_framework — Pluggable Eval Platform
 
-The current setup works but doesn't scale cleanly. Every new system duplicates the same runner logic, judge setup, and CI boilerplate. The next step is a shared framework: one adapter interface, one judge, one red team library — systems plug in, the framework does the rest.
+The per-system eval directories above work but don't scale. Every new system duplicated the same runner logic, judge setup, and CI boilerplate. `eval_framework/` solves that — one adapter interface, one judge, one red team library. Systems plug in, the framework does the rest.
 
 ```mermaid
 flowchart LR
@@ -151,6 +151,26 @@ flowchart LR
 ```
 
 Write a 20-line adapter. Drop in case files. Run the framework.
+
+### Systems covered
+
+| System | Deterministic | Guardrail | Judge |
+|---|---|---|---|
+| `llm_gateway` | routing 15/15 | — | — |
+| `synack_agent` | — | 19/19 | — |
+| `plant_care_agent` | decisions 10/10 | 9/9 | calibrated |
+| `recs_system` | reranking 9/9 | 8/8 | calibrated |
+| `yc_startup_validator` | classification 9/9 | 9/9 | calibrated |
+
+### What's built
+
+- **3 eval phase types** — deterministic (`call()` + substring match), guardrail (`validate_input` / `scan_output`), LLM-as-judge (Groq)
+- **Baseline regression detection** — `--save-baseline` / `--baseline` flags, exit 1 on regression
+- **Run history** — every run logged to `run_log.json`, `--history` shows pass rate trends
+- **Judge robustness** — ensemble scoring across multiple models, `--validate-judge` runs consistency and Spearman calibration against human labels
+- **GitHub Actions** — `eval-framework` CI job checks out all system repos and runs both systems with `--baseline`
+
+See [`eval_framework/README.md`](./eval_framework/README.md) for full docs.
 
 ---
 
