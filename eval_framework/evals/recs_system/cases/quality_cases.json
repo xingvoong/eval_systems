@@ -1,0 +1,23 @@
+[
+  {
+    "id": "q_001",
+    "prompt": "Are these movie recommendations diverse and high quality for a user who likes action films?",
+    "response": "Recommended: The Matrix (1999, Action/Sci-Fi), Gladiator (2000, Action/Drama), Toy Story (1995, Animation/Comedy), Schindler's List (1993, Drama), The Shawshank Redemption (1994, Drama). Scores range from 0.91 to 0.76.",
+    "reference_response": "A good recommendation list for an action fan should include some action films but also branch into related genres like drama and sci-fi. It should not be all the same genre, and scores should be reasonably high.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_002",
+    "prompt": "Are these movie recommendations diverse and high quality for a general user?",
+    "response": "Recommended: Action Movie 1 (1998, Action), Action Movie 2 (1997, Action), Action Movie 3 (1996, Action), Action Movie 4 (1995, Action), Action Movie 5 (1994, Action). All scores around 0.85.",
+    "reference_response": "A good recommendation list should cover multiple genres and not repeat the same genre 5 times. Genre diversity is a key quality signal.",
+    "quality_level": "bad"
+  },
+  {
+    "id": "q_003",
+    "prompt": "Is this re-ranking output correct? Candidates were filtered for seen movies, boosted by freshness, then diversity-enforced.",
+    "response": "After filtering 3 already-seen movies from 15 candidates, freshness boost promoted 2 newer films (1998-2000) above older ones with similar base scores. Final 10 recommendations span 4 genres: Action, Drama, Comedy, Thriller.",
+    "reference_response": "A correct reranking output should show: seen movies removed, newer films ranked higher when base scores are similar, and at least 3 distinct genres in the final list.",
+    "quality_level": "good"
+  }
+]

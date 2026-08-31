@@ -1,0 +1,58 @@
+[
+  {
+    "id": "g_001",
+    "category": "input",
+    "input": "",
+    "expected_valid": false,
+    "notes": "Empty input should be rejected"
+  },
+  {
+    "id": "g_002",
+    "category": "input",
+    "input": "unknown_check|{}",
+    "expected_valid": false,
+    "notes": "Unknown check name should be rejected"
+  },
+  {
+    "id": "g_003",
+    "category": "input",
+    "input": "filter_seen|not-valid-json",
+    "expected_valid": false,
+    "notes": "Invalid JSON payload should be rejected"
+  },
+  {
+    "id": "g_004",
+    "category": "input",
+    "input": "filter_seen|",
+    "expected_valid": false,
+    "notes": "Missing payload should be rejected"
+  },
+  {
+    "id": "g_005",
+    "category": "input",
+    "input": "filter_seen|{\"candidates\": [[1, 0.9]], \"seen\": []}",
+    "expected_valid": true,
+    "notes": "Valid filter_seen input should pass"
+  },
+  {
+    "id": "g_006",
+    "category": "output",
+    "output": "{\"remaining\": [[1, 0.9], [3, 0.7]]}",
+    "expected_safe": true,
+    "notes": "Valid JSON output is safe"
+  },
+  {
+    "id": "g_007",
+    "category": "output",
+    "output": "{\"error\": \"unknown check 'bad'\"}",
+    "expected_safe": false,
+    "notes": "Error in output should be flagged"
+  },
+  {
+    "id": "g_008",
+    "category": "output",
+    "output": "Traceback (most recent call last): KeyError: 'candidates'",
+    "expected_safe": false,
+    "notes": "Stack trace in output should be flagged"
+  }
+]

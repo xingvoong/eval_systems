@@ -1,0 +1,14 @@
+system: recs_system
+phases:
+  - name: reranking
+    type: deterministic
+    cases: cases/reranking_cases.json
+    threshold: 8
+  - name: guardrail
+    type: guardrail
+    cases: cases/guardrail_cases.json
+    threshold: 6
+  - name: quality
+    type: judge
+    cases: cases/quality_cases.json
+    judge_model: openai/gpt-oss-20b

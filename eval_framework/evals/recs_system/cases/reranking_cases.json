@@ -1,0 +1,56 @@
+[
+  {
+    "id": "r_001",
+    "prompt": "filter_seen|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7]], \"seen\": [2]}",
+    "expected": "\"remaining\": [[1",
+    "notes": "Movie 2 is seen — should be removed, movies 1 and 3 remain"
+  },
+  {
+    "id": "r_002",
+    "prompt": "filter_seen|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7]], \"seen\": [1, 2, 3]}",
+    "expected": "\"remaining\": []",
+    "notes": "All movies seen — result should be empty"
+  },
+  {
+    "id": "r_003",
+    "prompt": "filter_seen|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7]], \"seen\": []}",
+    "expected": "\"remaining\": [[1",
+    "notes": "No seen movies — all candidates remain"
+  },
+  {
+    "id": "r_004",
+    "prompt": "apply_freshness|{\"candidates\": [[1, 1.0], [2, 1.0]], \"titles\": {\"1\": \"Old Movie (1940)\", \"2\": \"New Movie (1999)\"}}",
+    "expected": "\"new_order\": [2, 1]",
+    "notes": "Same base score — newer movie (1999) should rank above older (1940) after freshness boost"
+  },
+  {
+    "id": "r_005",
+    "prompt": "apply_freshness|{\"candidates\": [[1, 1.0], [2, 1.0]], \"titles\": {\"1\": \"New Movie (2000)\", \"2\": \"Old Movie (1920)\"}}",
+    "expected": "\"new_order\": [1, 2]",
+    "notes": "Same base score — newer movie (2000) should stay ranked above older (1920)"
+  },
+  {
+    "id": "r_006",
+    "prompt": "enforce_diversity|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7], [4, 0.6], [5, 0.5]], \"genres\": {\"1\": [\"Action\"], \"2\": [\"Action\"], \"3\": [\"Comedy\"], \"4\": [\"Drama\"], \"5\": [\"Action\"]}, \"top_n\": 3}",
+    "expected": "\"distinct_genres\":",
+    "notes": "3 picks from 3 genres — diversity enforced"
+  },
+  {
+    "id": "r_007",
+    "prompt": "enforce_diversity|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7]], \"genres\": {\"1\": [\"Action\", \"Drama\"], \"2\": [\"Comedy\", \"Romance\"], \"3\": [\"Thriller\"]}, \"top_n\": 3}",
+    "expected": "\"count\": 3",
+    "notes": "All 3 candidates selected, covering multiple genres"
+  },
+  {
+    "id": "r_008",
+    "prompt": "filter_seen|{\"candidates\": [[10, 0.95], [20, 0.85]], \"seen\": [10]}",
+    "expected": "\"remaining\": [[20",
+    "notes": "Movie 10 filtered — only movie 20 remains"
+  },
+  {
+    "id": "r_009",
+    "prompt": "enforce_diversity|{\"candidates\": [[1, 0.9], [2, 0.8], [3, 0.7], [4, 0.6], [5, 0.5]], \"genres\": {\"1\": [\"Action\"], \"2\": [\"Action\"], \"3\": [\"Action\"], \"4\": [\"Drama\"], \"5\": [\"Comedy\"]}, \"top_n\": 5}",
+    "expected": "\"count\": 5",
+    "notes": "5 picks, genre diversity swap should pull in Drama and Comedy"
+  }
+]
