@@ -1,7 +1,7 @@
 system: llm_gateway
 phases:
   - name: routing
-    type: deterministic
+    type: routing
     cases: cases/routing_cases.json
     threshold: 15
   - name: quality

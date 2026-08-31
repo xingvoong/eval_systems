@@ -58,7 +58,7 @@ def load_cases_from_json(path: Path, phase_type: str) -> list[EvalCase]:
     for item in raw:
         cid = item["id"]
 
-        if phase_type == "deterministic":
+        if phase_type in ("deterministic", "routing"):
             # routing_cases.json: input=prompt, expected=expected_model
             inp = item.get("prompt", item.get("input", ""))
             expected = item.get("expected_model", item.get("expected", None))
@@ -191,6 +191,31 @@ def run_judge_phase(adapter, cases: list[EvalCase], phase_name: str, judge_model
     report.add_result(phase_name, len(cases), len(cases), 0)
 
 
+def run_deterministic_phase(adapter, cases: list[EvalCase], phase_name: str, threshold: int, report: Report) -> None:
+    """General deterministic phase — calls adapter.call() and checks expected string is in output."""
+    from eval_framework.case import EvalResult
+
+    passed = 0
+    print(f"\nDeterministic eval — {adapter.name} — {phase_name} — {len(cases)} cases\n")
+    print(f"{'ID':<10} {'Status':<8} {'Expected':<30} {'Actual':<40} Notes")
+    print(f"{'─'*100}")
+
+    for case in cases:
+        actual = adapter.call(case.input)
+        expected = case.expected or ""
+        ok = expected in actual
+
+        if ok:
+            passed += 1
+        marker = "✓ PASS" if ok else "✗ FAIL"
+        notes = "" if ok else f"expected '{expected}' not in output"
+        print(f"{case.id:<10} {marker:<8} {expected[:30]:<30} {actual[:40]:<40} {notes}")
+
+    print(f"{'─'*100}")
+    print(f"Passed: {passed}/{len(cases)}\n")
+    report.add_result(phase_name, passed, len(cases), threshold)
+
+
 def run_phase(phase_cfg: dict, adapter, cases_dir: Path, report: Report) -> None:
     name = phase_cfg["name"]
     ptype = phase_cfg["type"]
@@ -199,6 +224,8 @@ def run_phase(phase_cfg: dict, adapter, cases_dir: Path, report: Report) -> None
     cases = load_cases_from_json(cases_path, ptype)
 
     if ptype == "deterministic":
+        run_deterministic_phase(adapter, cases, name, threshold, report)
+    elif ptype == "routing":
         run_routing_phase(adapter, cases, threshold, report)
     elif ptype == "guardrail":
         from eval_framework.runner import run_guardrail

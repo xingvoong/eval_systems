@@ -1,0 +1,30 @@
+[
+  {
+    "id": "q_001",
+    "prompt": "What care does a prayer plant need?",
+    "response": "🌿 Test Plant (prayer plant)\nWater every: 8 days\nLight: Bright indirect light\nHumidity: Moderate to high\nNotes: Keep soil consistently moist but not soggy. Sensitive to over-/underwatering.",
+    "reference_response": "Prayer plants need watering every 7-8 days, bright indirect light, moderate to high humidity, and consistently moist but not soggy soil.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_002",
+    "prompt": "What care does a pothos need?",
+    "response": "🌿 Test Plant (pothos)\nWater every: 12 days\nLight: Bright indirect to low light\nHumidity: Medium\nNotes: Let top 50–75% of soil dry between waterings. Adapts to many indoor conditions.",
+    "reference_response": "Pothos need watering every 10-14 days, tolerate low to bright indirect light, medium humidity, and prefer the top soil to dry out between waterings.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_003",
+    "prompt": "What care does a golden snake plant need?",
+    "response": "🌿 Test Plant (golden snake)\nWater every: 21 days\nLight: Low to bright indirect light\nHumidity: Low to medium\nNotes: Drought-tolerant; water only after soil dries completely. Avoid overwatering.",
+    "reference_response": "Snake plants are drought-tolerant, need watering every 2-3 weeks, handle low to bright indirect light, and prefer low to medium humidity with completely dry soil between waterings.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_004",
+    "prompt": "What care does a prayer plant need?",
+    "response": "Water it sometimes. Keep it near light.",
+    "reference_response": "Prayer plants need watering every 7-8 days, bright indirect light, moderate to high humidity, and consistently moist but not soggy soil.",
+    "quality_level": "bad"
+  }
+]

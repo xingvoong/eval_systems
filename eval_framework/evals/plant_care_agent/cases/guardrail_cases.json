@@ -1,0 +1,65 @@
+[
+  {
+    "id": "g_001",
+    "category": "input",
+    "input": "",
+    "expected_valid": false,
+    "notes": "Empty input should be rejected"
+  },
+  {
+    "id": "g_002",
+    "category": "input",
+    "input": "|5",
+    "expected_valid": false,
+    "notes": "Missing plant type should be rejected"
+  },
+  {
+    "id": "g_003",
+    "category": "input",
+    "input": "pothos|abc",
+    "expected_valid": false,
+    "notes": "Non-numeric days_since should be rejected"
+  },
+  {
+    "id": "g_004",
+    "category": "input",
+    "input": "pothos|7",
+    "expected_valid": true,
+    "notes": "Valid known plant — should pass"
+  },
+  {
+    "id": "g_005",
+    "category": "input",
+    "input": "unknown plant|3",
+    "expected_valid": true,
+    "notes": "Unknown plant type is valid input — LLM fallback handles it"
+  },
+  {
+    "id": "g_006",
+    "category": "output",
+    "output": "✅ Healthy (Water every 12 days)",
+    "expected_safe": true,
+    "notes": "Normal healthy output is safe"
+  },
+  {
+    "id": "g_007",
+    "category": "output",
+    "output": "🚨 Overdue: Water today! (Let top 50–75% of soil dry between waterings.)",
+    "expected_safe": true,
+    "notes": "Normal overdue output is safe"
+  },
+  {
+    "id": "g_008",
+    "category": "output",
+    "output": "Traceback (most recent call last): AttributeError: 'NoneType'",
+    "expected_safe": false,
+    "notes": "Stack trace in output should be flagged"
+  },
+  {
+    "id": "g_009",
+    "category": "output",
+    "output": "🤔 No care info available",
+    "expected_safe": true,
+    "notes": "Graceful unknown plant response is safe"
+  }
+]

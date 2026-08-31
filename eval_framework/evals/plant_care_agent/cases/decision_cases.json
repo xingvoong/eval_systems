@@ -1,0 +1,62 @@
+[
+  {
+    "id": "d_001",
+    "prompt": "prayer plant|2",
+    "expected": "✅ Healthy",
+    "notes": "Watered 2 days ago, water_days=8 — healthy"
+  },
+  {
+    "id": "d_002",
+    "prompt": "prayer plant|8",
+    "expected": "💧 Needs water soon",
+    "notes": "Watered 8 days ago, water_days=8, soon_threshold=2 — needs water soon"
+  },
+  {
+    "id": "d_003",
+    "prompt": "prayer plant|13",
+    "expected": "🚨 Overdue",
+    "notes": "Watered 13 days ago, well past water_days=8 — overdue"
+  },
+  {
+    "id": "d_004",
+    "prompt": "pothos|5",
+    "expected": "✅ Healthy",
+    "notes": "Watered 5 days ago, water_days=12 — healthy"
+  },
+  {
+    "id": "d_005",
+    "prompt": "pothos|12",
+    "expected": "💧 Needs water soon",
+    "notes": "Watered 12 days ago, water_days=12, soon_threshold=2 — needs water soon"
+  },
+  {
+    "id": "d_006",
+    "prompt": "pothos|17",
+    "expected": "🚨 Overdue",
+    "notes": "Watered 17 days ago, well past water_days=12 — overdue"
+  },
+  {
+    "id": "d_007",
+    "prompt": "golden snake|10",
+    "expected": "✅ Healthy",
+    "notes": "Watered 10 days ago, water_days=21 — healthy"
+  },
+  {
+    "id": "d_008",
+    "prompt": "golden snake|22",
+    "expected": "💧 Needs water soon",
+    "notes": "Watered 22 days ago, water_days=21, soon_threshold=3 — needs water soon"
+  },
+  {
+    "id": "d_009",
+    "prompt": "golden snake|30",
+    "expected": "🚨 Overdue",
+    "notes": "Watered 30 days ago, well past water_days=21 — overdue"
+  },
+  {
+    "id": "d_010",
+    "prompt": "unknown plant|5",
+    "expected": "🤔 No care info available",
+    "notes": "Unknown type with no LLM fallback — should return no care info"
+  }
+]

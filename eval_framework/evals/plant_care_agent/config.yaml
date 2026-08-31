@@ -1,0 +1,14 @@
+system: plant_care_agent
+phases:
+  - name: decisions
+    type: deterministic
+    cases: cases/decision_cases.json
+    threshold: 9
+  - name: guardrail
+    type: guardrail
+    cases: cases/guardrail_cases.json
+    threshold: 7
+  - name: quality
+    type: judge
+    cases: cases/quality_cases.json
+    judge_model: openai/gpt-oss-20b
