@@ -178,7 +178,7 @@ See [`eval_framework/README.md`](./eval_framework/README.md) for full docs.
 
 **Hand-write your test cases before you run anything.**
 
-Both projects started with labeled datasets written before the first eval ran. That discipline paid off in judge calibration — human labels written without seeing judge scores are the only clean signal. If you label after the fact, you're fitting to the judge, not measuring it.
+Both early projects started with labeled datasets written before the first eval ran. That discipline paid off in judge calibration — human labels written without seeing judge scores are the only clean signal. If you label after the fact, you're fitting to the judge, not measuring it.
 
 **The classifier is always the weakest link.**
 
@@ -195,3 +195,24 @@ Regex guardrails broke on zero-width spaces, unicode homoglyphs, double spaces, 
 **Evals find the gap between what the code does and what it should do.**
 
 Not bugs — gaps. The regex was correct. The routing logic was correct. The judge was consistent. The gaps were in the specification: a pattern that matched one modifier word but not two, a completeness metric that couldn't distinguish correct from incorrect, a classifier that had never seen its own low-frequency labels. You don't find those by reading the code. You find them by running the eval.
+
+---
+
+## Wrap-up
+
+This repo started as two standalone eval projects. It ended with a pluggable framework that covers seven systems across routing, agents, guardrails, recommendations, and classification.
+
+The progression matters. The per-system evals (`llm_inference_gateway_eval`, `synack_agent_prep_eval`) showed what a complete eval looks like — deterministic checks, LLM judge, judge validation, red team, CI. But they didn't compose. Every new system would have meant duplicating the same runner, the same judge setup, the same CI boilerplate.
+
+`eval_framework` fixes that. Write a 20-line adapter. Drop in case files. Everything else — phase execution, threshold enforcement, baseline regression, run logging, judge validation — is handled. Adding a new system went from a week of work to an afternoon.
+
+Three things that actually mattered:
+
+**Structure over sophistication.** The most valuable evals in this repo are the deterministic ones. Labeled cases with right answers, run against the system, checked against a threshold. No model involved. No variance. If something breaks, you know exactly what broke. The LLM judge matters for quality — but only after the deterministic layer is solid.
+
+**Regression detection is the real CI value.** A pass/fail threshold tells you the system works today. A baseline comparison tells you it still works after the last change. That's the difference between a test suite and a safety net. `--baseline` makes every run a regression check, not just a health check.
+
+**Eval coverage compounds.** Seven systems in the framework means seven places that will catch breakage automatically. Each new adapter costs one afternoon and pays off every time CI runs. The marginal cost of coverage goes down. The marginal value goes up. That's the compounding that makes the framework worth building.
+
+The framework isn't finished. Run history exists but nothing surfaces anomalies automatically. The judge still needs a live API key to run in CI. HTTP adapters for staging environments aren't built yet. But the foundation is there — and the foundation is the hard part.
+
