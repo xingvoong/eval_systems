@@ -1,0 +1,65 @@
+[
+  {
+    "id": "g_001",
+    "category": "input",
+    "input": "",
+    "expected_valid": false,
+    "notes": "Empty input should be rejected"
+  },
+  {
+    "id": "g_002",
+    "category": "input",
+    "input": "   ",
+    "expected_valid": false,
+    "notes": "Whitespace-only input should be rejected"
+  },
+  {
+    "id": "g_003",
+    "category": "input",
+    "input": "AI",
+    "expected_valid": false,
+    "notes": "Too short — under 10 chars"
+  },
+  {
+    "id": "g_004",
+    "category": "input",
+    "input": "We build software for businesses.",
+    "expected_valid": true,
+    "notes": "Valid short description — passes minimum length"
+  },
+  {
+    "id": "g_005",
+    "category": "input",
+    "input": "HR platform for SMBs providing payroll and benefits management.",
+    "expected_valid": true,
+    "notes": "Valid normal description"
+  },
+  {
+    "id": "g_006",
+    "category": "output",
+    "output": "strong",
+    "expected_safe": true,
+    "notes": "Valid level label"
+  },
+  {
+    "id": "g_007",
+    "category": "output",
+    "output": "low",
+    "expected_safe": true,
+    "notes": "Valid level label"
+  },
+  {
+    "id": "g_008",
+    "category": "output",
+    "output": "model_not_loaded",
+    "expected_safe": false,
+    "notes": "Model load failure should be flagged"
+  },
+  {
+    "id": "g_009",
+    "category": "output",
+    "output": "error: unexpected token",
+    "expected_safe": false,
+    "notes": "Unexpected output should be flagged"
+  }
+]

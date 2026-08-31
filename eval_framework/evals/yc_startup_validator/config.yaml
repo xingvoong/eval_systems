@@ -1,0 +1,14 @@
+system: yc_startup_validator
+phases:
+  - name: classification
+    type: deterministic
+    cases: cases/classification_cases.json
+    threshold: 7
+  - name: guardrail
+    type: guardrail
+    cases: cases/guardrail_cases.json
+    threshold: 6
+  - name: quality
+    type: judge
+    cases: cases/quality_cases.json
+    judge_model: openai/gpt-oss-20b

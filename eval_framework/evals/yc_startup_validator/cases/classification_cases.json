@@ -1,0 +1,56 @@
+[
+  {
+    "id": "c_001",
+    "prompt": "We provide HR benefits and payroll platform for SMBs. Single stop shop for all employee management needs.",
+    "expected": "strong",
+    "notes": "High-signal YC-style description — HR, SMBs, payroll, stop shop"
+  },
+  {
+    "id": "c_002",
+    "prompt": "Benefits platform for SMBs providing single stop shop for HR, payroll, and delivery management.",
+    "expected": "strong",
+    "notes": "Dense positive signal words — scores 82"
+  },
+  {
+    "id": "c_003",
+    "prompt": "Online delivery platform connecting home chefs with customers. Sustainable food chain for latam.",
+    "expected": "strong",
+    "notes": "Delivery, connects, sustainable, chain, latam — scores 79"
+  },
+  {
+    "id": "c_004",
+    "prompt": "Payment platform for SMBs. We make it easier to run payments online and connect businesses with customers.",
+    "expected": "promising",
+    "notes": "Good signal but not top tier — scores 72"
+  },
+  {
+    "id": "c_005",
+    "prompt": "Car delivery platform. We provide home delivery for car dealerships and connects buyers with dealers.",
+    "expected": "promising",
+    "notes": "Car, delivery, home, connects — scores 66"
+  },
+  {
+    "id": "c_006",
+    "prompt": "B2B software that helps restaurants manage their supply chain and reduce food waste using predictive analytics.",
+    "expected": "weak",
+    "notes": "Moderate signal — scores 47"
+  },
+  {
+    "id": "c_007",
+    "prompt": "Consumer app for tracking personal fitness goals with social features and leaderboards.",
+    "expected": "low",
+    "notes": "Low YC signal — consumer, social, fitness — scores 11"
+  },
+  {
+    "id": "c_008",
+    "prompt": "A mobile game with NFT-based in-game items and a play-to-earn economy.",
+    "expected": "low",
+    "notes": "Very low signal — scores 10"
+  },
+  {
+    "id": "c_009",
+    "prompt": "Social network for pet owners to share photos and connect with local pet communities.",
+    "expected": "low",
+    "notes": "Consumer social — scores 10"
+  }
+]

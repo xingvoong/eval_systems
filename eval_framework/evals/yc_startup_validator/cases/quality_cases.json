@@ -1,0 +1,23 @@
+[
+  {
+    "id": "q_001",
+    "prompt": "Is 'strong' a reasonable score for a startup description focused on HR benefits and payroll for SMBs?",
+    "response": "strong",
+    "reference_response": "Strong is reasonable. HR, payroll, and SMB tooling consistently appear in successful YC companies like Rippling, Gusto, and Justworks. This description aligns well with that pattern.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_002",
+    "prompt": "Is 'low' a reasonable score for a consumer social app for pet owners?",
+    "response": "low",
+    "reference_response": "Low is reasonable. Consumer social apps rarely scale to the level YC favors. No clear B2B revenue model, no infrastructure angle, no 10x better claim. This is a pattern that typically scores low.",
+    "quality_level": "good"
+  },
+  {
+    "id": "q_003",
+    "prompt": "Is 'strong' a reasonable score for a mobile game with NFT in-game items?",
+    "response": "strong",
+    "reference_response": "Strong is not a reasonable score for an NFT game. This is a consumer entertainment product with speculative economics. It should score low, not strong.",
+    "quality_level": "bad"
+  }
+]
