@@ -238,8 +238,15 @@ Shipped:
 - Judge phases skip gracefully when `GROQ_API_KEY` is not set
 - `eval-framework` GitHub Actions job — checks out all sibling repos, installs deps, runs both systems with `--baseline`
 
-### Phase 3 — More systems
+### Phase 3 — More systems ✓
 Expand coverage beyond `llm_gateway` and `synack_agent`. Each new system is three files: an adapter, a config, and case data. Target: five systems covering routing, agents, and RAG pipelines.
+
+Shipped:
+- `plant_care_agent` — deterministic (watering decisions) + guardrail (bad inputs, unsafe outputs)
+- `recs_system` — deterministic (filter_seen, apply_freshness, enforce_diversity) + guardrail
+- `yc_startup_validator` — deterministic (classification across strong/promising/weak/low) + guardrail
+- Generalized `deterministic` phase type using `adapter.call()` — split out `routing` as its own type for llm_gateway
+- Probed model scores before writing cases to ensure expected labels match actual model behavior
 
 ### Phase 4 — Eval observability
 Track pass rates over time. Surface trends — which cases are flaky, which thresholds are too loose, where judge scores are drifting. Start with a simple JSON log per run. Build dashboards later if the data proves useful.

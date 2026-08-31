@@ -242,6 +242,78 @@ def run_phase(phase_cfg: dict, adapter, cases_dir: Path, report: Report) -> None
         raise ValueError(f"Unknown phase type '{ptype}'")
 
 
+def append_run_log(log_path: Path, report: Report) -> None:
+    """Append this run's results to the system's run_log.json."""
+    from datetime import datetime, timezone
+
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "phases": report.to_dict()["phases"],
+    }
+
+    runs = []
+    if log_path.exists():
+        with open(log_path) as f:
+            runs = json.load(f)
+
+    runs.append(entry)
+
+    with open(log_path, "w") as f:
+        json.dump(runs, f, indent=2)
+
+
+def print_history(log_path: Path, last_n: int = 10) -> None:
+    """Print pass rate trends from the run log."""
+    if not log_path.exists():
+        print("No run log found. Run evals first to build history.")
+        return
+
+    with open(log_path) as f:
+        runs = json.load(f)
+
+    if not runs:
+        print("Run log is empty.")
+        return
+
+    recent = runs[-last_n:]
+
+    # collect all phase names in order of first appearance
+    phase_names: list[str] = []
+    for run in recent:
+        for p in run["phases"]:
+            if p["phase"] not in phase_names:
+                phase_names.append(p["phase"])
+
+    print(f"\nRun history — last {len(recent)} runs\n")
+    print(f"{'Phase':<20} {'Runs':<6} {'Avg pass%':<12} {'Min':<8} {'Max':<8} Trend")
+    print(f"{'─'*65}")
+
+    for phase in phase_names:
+        rates = []
+        for run in recent:
+            for p in run["phases"]:
+                if p["phase"] == phase and p["total"] > 0:
+                    rates.append(round(100 * p["passed"] / p["total"], 1))
+
+        if not rates:
+            continue
+
+        avg = round(sum(rates) / len(rates), 1)
+        mn = min(rates)
+        mx = max(rates)
+        # simple trend arrow
+        if len(rates) >= 2:
+            trend = "↑" if rates[-1] > rates[0] else ("↓" if rates[-1] < rates[0] else "→")
+        else:
+            trend = "—"
+
+        print(f"{phase:<20} {len(rates):<6} {avg:<12} {mn:<8} {mx:<8} {trend}")
+
+    print(f"{'─'*65}")
+    print(f"\nFirst run: {recent[0]['timestamp'][:19].replace('T', ' ')}")
+    print(f"Last run:  {recent[-1]['timestamp'][:19].replace('T', ' ')}\n")
+
+
 def main() -> int:
     available = sorted(p.stem for p in SYSTEMS_DIR.glob("*.py") if not p.stem.startswith("_"))
     parser = argparse.ArgumentParser(description="Pluggable eval runner")
@@ -252,6 +324,8 @@ def main() -> int:
                         help="Save this run's results as the baseline for future regression checks")
     parser.add_argument("--baseline", action="store_true",
                         help="Compare this run against the saved baseline — fail if any phase regressed")
+    parser.add_argument("--history", action="store_true",
+                        help="Print pass rate trends from the run log instead of running evals")
     args = parser.parse_args()
 
     config_path = EVALS_DIR / args.system / "config.yaml"
@@ -263,6 +337,10 @@ def main() -> int:
         config = yaml.safe_load(f)
 
     cases_dir = EVALS_DIR / args.system
+
+    if args.history:
+        print_history(EVALS_DIR / args.system / "run_log.json")
+        return 0
 
     adapter = load_adapter(args.system)
     report = Report()
@@ -278,6 +356,7 @@ def main() -> int:
         run_phase(phase_cfg, adapter, cases_dir, report)
 
     report.print_summary()
+    append_run_log(EVALS_DIR / args.system / "run_log.json", report)
 
     if args.save_baseline:
         baseline_path = EVALS_DIR / args.system / "baseline.json"

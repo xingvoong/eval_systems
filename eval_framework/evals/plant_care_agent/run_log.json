@@ -1,0 +1,53 @@
+[
+  {
+    "timestamp": "2026-08-31T21:15:22.402803+00:00",
+    "phases": [
+      {
+        "phase": "decisions",
+        "passed": 10,
+        "total": 10,
+        "threshold": 9
+      },
+      {
+        "phase": "guardrail",
+        "passed": 9,
+        "total": 9,
+        "threshold": 7
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-08-31T21:15:22.806569+00:00",
+    "phases": [
+      {
+        "phase": "decisions",
+        "passed": 10,
+        "total": 10,
+        "threshold": 9
+      },
+      {
+        "phase": "guardrail",
+        "passed": 9,
+        "total": 9,
+        "threshold": 7
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-08-31T21:15:23.134720+00:00",
+    "phases": [
+      {
+        "phase": "decisions",
+        "passed": 10,
+        "total": 10,
+        "threshold": 9
+      },
+      {
+        "phase": "guardrail",
+        "passed": 9,
+        "total": 9,
+        "threshold": 7
+      }
+    ]
+  }
+]
